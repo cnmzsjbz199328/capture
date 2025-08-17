@@ -6,19 +6,19 @@
   <style>
     html, body {
       width: 350px;
-      height: 500px;
+      height: 450px;
       min-width: 350px;
-      min-height: 500px;
+      min-height: 450px;
       max-width: 350px;
-      max-height: 500px;
+      max-height: 450px;
       font-family: sans-serif;
       margin: 0;
-      padding: 0;
+      padding: 8px;
       box-sizing: border-box;
-      overflow: hidden;
+      overflow-y: auto;
     }
-    #status { margin-bottom: 8px; }
-    button { width: 100%; margin: 10px 0; }
+    #status { margin-bottom: 6px; }
+    button { width: 100%; margin: 6px 0; }
     #deleteSelected, #exportAll {
       margin: 0;
       background: #f8f9fa;
@@ -29,19 +29,19 @@
     #deleteSelected:hover { background: #ffe6e6; }
     #exportAll:hover { background: #e6f3ff; }
     #contentDetail {
-      margin-top: 10px;
+      margin-top: 8px;
       font-size: 13px;
-      max-height: 320px;
-      overflow: auto;
+      height: 280px;
+      overflow-y: auto;
       background: #fafbfc;
       border-radius: 4px;
       border: 1px solid #eee;
-      padding: 6px 4px;
+      padding: 8px;
     }
     iframe {
       width: 100%;
-      min-height: 200px;
-      max-height: 260px;
+      min-height: 120px;
+      max-height: 200px;
       border: 1px solid #ccc;
       background: #fff;
     }
@@ -54,7 +54,7 @@
   <select id="titleDropdown" style="width:100%; padding:6px; margin-bottom:8px; font-size:14px; border:1px solid #ccc; border-radius:4px;">
     <option value="" disabled selected>请选择已保存内容</option>
   </select>
-  <div style="display:flex; gap:8px; margin-bottom:10px;">
+  <div style="display:flex; gap:8px; margin-bottom:8px;">
     <button id="deleteSelected" style="flex:1; padding:4px; font-size:12px;">删除所选</button>
     <button id="exportAll" style="flex:1; padding:4px; font-size:12px;">导出全部</button>
   </div>

@@ -23,7 +23,12 @@ function renderList() {
     
     if (list.length === 0) {
       select.innerHTML = '<option value="" disabled selected>暂无内容</option>';
-      document.getElementById('contentDetail').innerHTML = '';
+    }
+    
+    // 确保详情区域始终存在
+    const detail = document.getElementById('contentDetail');
+    if (!detail.innerHTML) {
+      detail.innerHTML = '<div style="color:#888;text-align:center;padding-top:100px;">选择一个条目查看详情</div>';
     }
   });
 }
@@ -86,7 +91,7 @@ document.addEventListener('DOMContentLoaded', () => {
         list.splice(index, 1);
         chrome.storage.local.set({contentList: list}, () => {
           renderList();
-          document.getElementById('contentDetail').innerHTML = '';
+          document.getElementById('contentDetail').innerHTML = '<div style="color:#888;text-align:center;padding-top:100px;">选择一个条目查看详情</div>';
           alert('删除成功');
         });
       }
