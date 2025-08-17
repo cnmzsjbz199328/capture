@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>内容选择器</title>
+  <style>
+    html, body {
+      width: 350px;
+      height: 500px;
+      min-width: 350px;
+      min-height: 500px;
+      max-width: 350px;
+      max-height: 500px;
+      font-family: sans-serif;
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      overflow: hidden;
+    }
+    #status { margin-bottom: 8px; }
+    button { width: 100%; margin: 10px 0; }
+    #titleList {
+      max-height: 120px;
+      overflow: auto;
+      margin: 0;
+      padding: 0 0 0 18px;
+    }
+    #contentDetail {
+      margin-top: 10px;
+      font-size: 13px;
+      max-height: 320px;
+      overflow: auto;
+      background: #fafbfc;
+      border-radius: 4px;
+      border: 1px solid #eee;
+      padding: 6px 4px;
+    }
+    iframe {
+      width: 100%;
+      min-height: 200px;
+      max-height: 260px;
+      border: 1px solid #ccc;
+      background: #fff;
+    }
+  </style>
+</head>
+<body>
+  <button id="activate">激活选择器</button>
+  <div id="status"></div>
+  <hr>
+  <details id="savedCollapse" open>
+    <summary style="font-weight:bold;cursor:pointer;outline:none;user-select:none;">已保存内容 ▼</summary>
+    <ul id="titleList"></ul>
+  </details>
+  <div id="contentDetail"></div>
+  <script src="popup.js"></script>
+</body>
+</html>
