@@ -1,3 +1,9 @@
+// 防止重复注入
+if (window.contentSelectorInjected) {
+  console.log('Content selector already injected');
+} else {
+  window.contentSelectorInjected = true;
+
 let selectorActive = false;
 let highlightDiv;
 
@@ -37,20 +43,35 @@ document.addEventListener('click', e => {
     url: location.href
   };
   let title = prompt('请输入本次抓取的标题：');
-  if (!title) {
+  console.log('Prompt returned:', title, 'Type:', typeof title);
+  if (!title || title.trim() === '') {
     alert('未填写标题，未保存。');
     selectorActive = false;
     if (highlightDiv) highlightDiv.remove();
     highlightDiv = null;
     return;
   }
+  title = title.trim(); // 去除首尾空格
   chrome.storage.local.get({contentList: []}, (res) => {
+    if (chrome.runtime.lastError) {
+      console.error('Storage error:', chrome.runtime.lastError);
+      alert('保存失败，请重试');
+      return;
+    }
     let contentList = res.contentList;
     contentList.push({title, info});
-    chrome.storage.local.set({contentList});
-    alert('内容已抓取并保存！');
+    chrome.storage.local.set({contentList}, () => {
+      if (chrome.runtime.lastError) {
+        console.error('Storage set error:', chrome.runtime.lastError);
+        alert('保存失败，请重试');
+      } else {
+        alert('内容已抓取并保存！');
+      }
+    });
   });
   selectorActive = false;
   if (highlightDiv) highlightDiv.remove();
   highlightDiv = null;
 }, true);
+
+} // 结束防重复注入的if块

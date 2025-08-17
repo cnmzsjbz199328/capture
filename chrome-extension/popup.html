@@ -19,12 +19,15 @@
     }
     #status { margin-bottom: 8px; }
     button { width: 100%; margin: 10px 0; }
-    #titleList {
-      max-height: 120px;
-      overflow: auto;
+    #deleteSelected, #exportAll {
       margin: 0;
-      padding: 0 0 0 18px;
+      background: #f8f9fa;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      cursor: pointer;
     }
+    #deleteSelected:hover { background: #ffe6e6; }
+    #exportAll:hover { background: #e6f3ff; }
     #contentDetail {
       margin-top: 10px;
       font-size: 13px;
@@ -48,10 +51,13 @@
   <button id="activate">激活选择器</button>
   <div id="status"></div>
   <hr>
-  <details id="savedCollapse" open>
-    <summary style="font-weight:bold;cursor:pointer;outline:none;user-select:none;">已保存内容 ▼</summary>
-    <ul id="titleList"></ul>
-  </details>
+  <select id="titleDropdown" style="width:100%; padding:6px; margin-bottom:8px; font-size:14px; border:1px solid #ccc; border-radius:4px;">
+    <option value="" disabled selected>请选择已保存内容</option>
+  </select>
+  <div style="display:flex; gap:8px; margin-bottom:10px;">
+    <button id="deleteSelected" style="flex:1; padding:4px; font-size:12px;">删除所选</button>
+    <button id="exportAll" style="flex:1; padding:4px; font-size:12px;">导出全部</button>
+  </div>
   <div id="contentDetail"></div>
   <script src="popup.js"></script>
 </body>
