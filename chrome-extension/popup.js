@@ -1,10 +1,31 @@
 document.getElementById('activate').onclick = async () => {
-  let [tab] = await chrome.tabs.query({active: true, currentWindow: true});
-  chrome.scripting.executeScript({
-    target: {tabId: tab.id},
-    func: () => window.dispatchEvent(new CustomEvent('activate-selector'))
-  });
-  document.getElementById('status').innerText = '选择器已激活，请在页面点击目标内容';
+  try {
+    let [tab] = await chrome.tabs.query({active: true, currentWindow: true});
+    
+    // 检查受限页面
+    if (tab.url.startsWith('chrome://') || tab.url.startsWith('chrome-extension://')) {
+      document.getElementById('status').innerText = '无法在此页面使用';
+      return;
+    }
+    
+    // 直接执行激活代码，不依赖事件
+    await chrome.scripting.executeScript({
+      target: {tabId: tab.id},
+      func: () => {
+        // 直接调用激活函数，而不是依赖事件
+        if (typeof activateSelector === 'function') {
+          activateSelector();
+        } else {
+          // 如果函数不存在，发送事件作为备用
+          window.dispatchEvent(new CustomEvent('activate-selector'));
+        }
+      }
+    });
+    
+    document.getElementById('status').innerText = '选择器已激活，请在页面点击目标内容（按ESC取消）';
+  } catch (error) {
+    document.getElementById('status').innerText = '激活失败：' + error.message;
+  }
 };
 
 // 展示已保存的内容下拉框
