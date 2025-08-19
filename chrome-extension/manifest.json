@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Web Content Selector",
   "version": "1.0",
-  "description": "选择网页内容并保存到本地。",
+  "description": "Select and save web page content locally.",
   "permissions": ["scripting", "activeTab", "storage"],
   "host_permissions": ["<all_urls>"],
   "action": {

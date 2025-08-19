@@ -2,38 +2,38 @@ document.getElementById('activate').onclick = async () => {
   try {
     let [tab] = await chrome.tabs.query({active: true, currentWindow: true});
     
-    // 检查受限页面
+    // Check restricted pages
     if (tab.url.startsWith('chrome://') || tab.url.startsWith('chrome-extension://')) {
-      document.getElementById('status').innerText = '无法在此页面使用';
+      document.getElementById('status').innerText = 'Cannot use on this page';
       return;
     }
     
-    // 直接执行激活代码，不依赖事件
+    // Directly execute activation code, not dependent on events
     await chrome.scripting.executeScript({
       target: {tabId: tab.id},
       func: () => {
-        // 直接调用激活函数，而不是依赖事件
+        // Directly call activation function, not relying on events
         if (typeof activateSelector === 'function') {
           activateSelector();
         } else {
-          // 如果函数不存在，发送事件作为备用
+          // If function doesn't exist, send event as backup
           window.dispatchEvent(new CustomEvent('activate-selector'));
         }
       }
     });
     
-    document.getElementById('status').innerText = '选择器已激活，请在页面点击目标内容（按ESC取消）';
+    document.getElementById('status').innerText = 'Selector activated, click target content on page (Press ESC to cancel)';
   } catch (error) {
-    document.getElementById('status').innerText = '激活失败：' + error.message;
+    document.getElementById('status').innerText = 'Activation failed: ' + error.message;
   }
 };
 
-// 展示已保存的内容下拉框
+// Display saved content dropdown
 function renderList() {
   chrome.storage.local.get({contentList: []}, res => {
     const list = res.contentList;
     const select = document.getElementById('titleDropdown');
-    select.innerHTML = '<option value="" disabled selected>请选择已保存内容</option>';
+    select.innerHTML = '<option value="" disabled selected>Select saved content</option>';
     
     list.forEach((item, idx) => {
       const option = document.createElement('option');
@@ -43,13 +43,13 @@ function renderList() {
     });
     
     if (list.length === 0) {
-      select.innerHTML = '<option value="" disabled selected>暂无内容</option>';
+      select.innerHTML = '<option value="" disabled selected>No content available</option>';
     }
     
-    // 确保详情区域始终存在
+    // Ensure detail area always exists
     const detail = document.getElementById('contentDetail');
     if (!detail.innerHTML) {
-      detail.innerHTML = '<div style="color:#888;text-align:center;padding-top:100px;">选择一个条目查看详情</div>';
+      detail.innerHTML = '<div style="color:#888;text-align:center;padding-top:100px;">Select an item to view details</div>';
     }
   });
 }
@@ -58,13 +58,13 @@ function renderList() {
 function showDetail(item) {
   const detail = document.getElementById('contentDetail');
   detail.innerHTML =
-    `<div><b>URL：</b><a href="${item.info.url}" target="_blank" style="color:#0066cc;">${item.info.url}</a></div>` +
-    `<div style="margin-top:8px;"><b>HTML：</b></div>` +
+    `<div><b>URL:</b><a href="${item.info.url}" target="_blank" style="color:#0066cc;">${item.info.url}</a></div>` +
+    `<div style="margin-top:8px;"><b>HTML:</b></div>` +
     `<iframe style="width:100%;min-height:200px;border:1px solid #ccc;background:#fff;margin-top:4px;" sandbox="allow-same-origin" srcdoc='${escapeHtmlForIframe(item.info.html)}'></iframe>`;
 }
 
 function escapeHtmlForIframe(str) {
-  // 用于srcdoc属性，需转义单引号和&
+  // For srcdoc attribute, need to escape single quotes and &
   return str.replace(/&/g, '&amp;').replace(/'/g, '&#39;');
 }
 
@@ -72,11 +72,11 @@ function escapeHtml(str) {
   return str.replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
 }
 
-// 初始化
+// Initialize
 document.addEventListener('DOMContentLoaded', () => {
   renderList();
   
-  // 监听下拉框选择事件
+  // Listen for dropdown selection events
   const select = document.getElementById('titleDropdown');
   select.addEventListener('change', function() {
     const selectedIndex = this.value;
@@ -90,17 +90,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // 删除所选按钮
+  // Delete selected button
   document.getElementById('deleteSelected').addEventListener('click', () => {
     const select = document.getElementById('titleDropdown');
     const selectedIndex = select.value;
     
     if (!selectedIndex || selectedIndex === '') {
-      alert('请先选择一个条目');
-      return;
-    }
-    
-    if (!confirm('确定要删除这个条目吗？')) {
+      alert('Please select an item first');
       return;
     }
     
@@ -112,19 +108,19 @@ document.addEventListener('DOMContentLoaded', () => {
         list.splice(index, 1);
         chrome.storage.local.set({contentList: list}, () => {
           renderList();
-          document.getElementById('contentDetail').innerHTML = '<div style="color:#888;text-align:center;padding-top:100px;">选择一个条目查看详情</div>';
-          alert('删除成功');
+          document.getElementById('contentDetail').innerHTML = '<div style="color:#888;text-align:center;padding-top:100px;">Select an item to view details</div>';
+          alert('Deleted successfully');
         });
       }
     });
   });
 
-  // 导出全部按钮
+  // Export all button
   document.getElementById('exportAll').addEventListener('click', () => {
     chrome.storage.local.get({contentList: []}, res => {
       const data = res.contentList;
       if (data.length === 0) {
-        alert('没有可导出的内容');
+        alert('No content to export');
         return;
       }
       
@@ -138,6 +134,23 @@ document.addEventListener('DOMContentLoaded', () => {
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
+    });
+  });
+
+  // Delete all button
+  document.getElementById('deleteAll').addEventListener('click', () => {
+    chrome.storage.local.get({contentList: []}, res => {
+      const data = res.contentList;
+      if (data.length === 0) {
+        alert('No content to delete');
+        return;
+      }
+      
+      chrome.storage.local.set({contentList: []}, () => {
+        renderList();
+        document.getElementById('contentDetail').innerHTML = '<div style="color:#888;text-align:center;padding-top:100px;">Select an item to view details</div>';
+        alert('All items deleted successfully');
+      });
     });
   });
 });

@@ -1,1 +1,1 @@
-// 空的 service worker，可后续扩展
+// Empty service worker, can be extended later

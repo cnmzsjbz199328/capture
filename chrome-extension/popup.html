@@ -1,62 +1,21 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>内容选择器</title>
-  <style>
-    html, body {
-      width: 350px;
-      height: 450px;
-      min-width: 350px;
-      min-height: 450px;
-      max-width: 350px;
-      max-height: 450px;
-      font-family: sans-serif;
-      margin: 0;
-      padding: 8px;
-      box-sizing: border-box;
-      overflow-y: auto;
-    }
-    #status { margin-bottom: 6px; }
-    button { width: 100%; margin: 6px 0; }
-    #deleteSelected, #exportAll {
-      margin: 0;
-      background: #f8f9fa;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      cursor: pointer;
-    }
-    #deleteSelected:hover { background: #ffe6e6; }
-    #exportAll:hover { background: #e6f3ff; }
-    #contentDetail {
-      margin-top: 8px;
-      font-size: 13px;
-      height: 280px;
-      overflow-y: auto;
-      background: #fafbfc;
-      border-radius: 4px;
-      border: 1px solid #eee;
-      padding: 8px;
-    }
-    iframe {
-      width: 100%;
-      min-height: 120px;
-      max-height: 200px;
-      border: 1px solid #ccc;
-      background: #fff;
-    }
-  </style>
+  <title>Web Content Selector</title>
+  <link rel="stylesheet" href="popup.css">
 </head>
 <body>
-  <button id="activate">嘻嘻，点击后在页面上选择内容</button>
+  <button id="activate">Click to select content on page</button>
   <div id="status"></div>
   <hr>
-  <select id="titleDropdown" style="width:100%; padding:6px; margin-bottom:8px; font-size:14px; border:1px solid #ccc; border-radius:4px;">
-    <option value="" disabled selected>请选择已保存内容</option>
+  <select id="titleDropdown">
+    <option value="" disabled selected>Select saved content</option>
   </select>
-  <div style="display:flex; gap:8px; margin-bottom:8px;">
-    <button id="deleteSelected" style="flex:1; padding:4px; font-size:12px;">删除所选</button>
-    <button id="exportAll" style="flex:1; padding:4px; font-size:12px;">导出全部</button>
+  <div class="button-container">
+    <button id="deleteSelected" class="action-button">Delete Selected</button>
+    <button id="exportAll" class="action-button">Export All</button>
+    <button id="deleteAll" class="action-button">Delete All</button>
   </div>
   <div id="contentDetail"></div>
   <script src="popup.js"></script>

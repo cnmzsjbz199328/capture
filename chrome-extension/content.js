@@ -1,7 +1,7 @@
 let selectorActive = false;
 let highlightDiv = null;
 
-// 清理函数
+// Cleanup function
 function cleanup() {
   selectorActive = false;
   if (highlightDiv && highlightDiv.parentNode) {
@@ -10,14 +10,14 @@ function cleanup() {
   highlightDiv = null;
 }
 
-// 激活选择器
+// Activate selector
 function activateSelector() {
   console.log('Activating selector');
-  cleanup(); // 先清理之前的状态
+  cleanup(); // Clean up previous state first
   
   selectorActive = true;
   
-  // 创建高亮框
+  // Create highlight box
   if (!highlightDiv) {
     highlightDiv = document.createElement('div');
     highlightDiv.style.position = 'absolute';
@@ -28,7 +28,7 @@ function activateSelector() {
   }
 }
 
-// 监听激活事件 - 每次都重新绑定
+// Listen for activation event - rebind each time
 window.addEventListener('activate-selector', activateSelector);
 
 document.addEventListener('mousemove', (e) => {
@@ -44,7 +44,7 @@ document.addEventListener('mousemove', (e) => {
   highlightDiv.style.height = rect.height + 'px';
 });
 
-// 点击捕获
+// Click capture
 document.addEventListener('click', (e) => {
   if (!selectorActive) return;
   
@@ -57,7 +57,7 @@ document.addEventListener('click', (e) => {
     return;
   }
   
-  // 立即清理，避免干扰prompt
+  // Clean up immediately to avoid interfering with prompt
   cleanup();
   
   const info = {
@@ -67,13 +67,13 @@ document.addEventListener('click', (e) => {
     url: location.href
   };
   
-  const title = prompt('请输入本次抓取的标题：');
+  const title = prompt('Enter title for this capture:');
   if (!title || !title.trim()) {
-    alert('未填写标题，未保存。');
+    alert('No title entered, not saved.');
     return;
   }
   
-  // 简单直接的存储
+  // Simple direct storage
   chrome.storage.local.get({contentList: []}, (res) => {
     const contentList = res.contentList || [];
     contentList.push({
@@ -84,19 +84,19 @@ document.addEventListener('click', (e) => {
     
     chrome.storage.local.set({contentList}, () => {
       if (chrome.runtime.lastError) {
-        alert('保存失败：' + chrome.runtime.lastError.message);
+        alert('Save failed: ' + chrome.runtime.lastError.message);
       } else {
-        alert('内容已抓取并保存！');
+        alert('Content captured and saved!');
       }
     });
   });
 }, true);
 
-// ESC取消
+// ESC to cancel
 document.addEventListener('keydown', (e) => {
   if (selectorActive && e.key === 'Escape') {
     cleanup();
-    alert('已取消选择');
+    alert('Selection cancelled');
   }
 });
 

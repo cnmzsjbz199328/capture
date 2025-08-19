@@ -1,0 +1,108 @@
+/* Main container styles */
+html, body {
+  width: 350px;
+  height: 450px;
+  min-width: 350px;
+  min-height: 450px;
+  max-width: 350px;
+  max-height: 450px;
+  font-family: sans-serif;
+  margin: 0;
+  padding: 8px;
+  box-sizing: border-box;
+  overflow-y: auto;
+}
+
+/* Status text */
+#status { 
+  margin-bottom: 6px; 
+}
+
+/* Main activate button */
+#activate {
+  width: 100%; 
+  margin: 6px 0;
+  padding: 8px;
+  font-size: 14px;
+  background: #4285f4;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+#activate:hover {
+  background: #3367d6;
+}
+
+/* Dropdown select */
+#titleDropdown {
+  width: 100%; 
+  padding: 6px; 
+  margin-bottom: 8px; 
+  font-size: 14px; 
+  border: 1px solid #ccc; 
+  border-radius: 4px;
+}
+
+/* Button container */
+.button-container {
+  display: flex; 
+  gap: 6px; 
+  margin-bottom: 8px;
+}
+
+/* Action buttons (Delete Selected, Export All, Delete All) */
+.action-button {
+  flex: 1; 
+  padding: 6px 4px; 
+  font-size: 12px;
+  margin: 0;
+  background: #f8f9fa;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+/* Delete buttons hover effect */
+#deleteSelected:hover,
+#deleteAll:hover {
+  background: #ffe6e6;
+  border-color: #ffb3b3;
+}
+
+/* Export button hover effect */
+#exportAll:hover {
+  background: #e6f3ff;
+  border-color: #b3d9ff;
+}
+
+/* Content detail area */
+#contentDetail {
+  margin-top: 8px;
+  font-size: 13px;
+  height: 280px;
+  overflow-y: auto;
+  background: #fafbfc;
+  border-radius: 4px;
+  border: 1px solid #eee;
+  padding: 8px;
+}
+
+/* Iframe styles */
+iframe {
+  width: 100%;
+  min-height: 120px;
+  max-height: 200px;
+  border: 1px solid #ccc;
+  background: #fff;
+  border-radius: 4px;
+}
+
+/* HR separator */
+hr {
+  border: none;
+  border-top: 1px solid #eee;
+  margin: 8px 0;
+}
