@@ -35,14 +35,57 @@ html, body {
   background: #3367d6;
 }
 
-/* Dropdown select */
-#titleDropdown {
-  width: 100%; 
-  padding: 6px; 
-  margin-bottom: 8px; 
-  font-size: 14px; 
-  border: 1px solid #ccc; 
+/* Custom select wrapper */
+.select-wrapper {
+  position: relative;
+  width: 100%;
+  margin-bottom: 8px;
+}
+
+/* Custom select styles */
+.custom-select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  width: 100%;
+  padding: 8px 30px 8px 12px;
+  font-size: 14px;
+  border: 1px solid #ccc;
   border-radius: 4px;
+  background-color: #fff;
+  cursor: pointer;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Arrow icon */
+.select-wrapper::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  transform: translateY(-50%);
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 5px solid #555;
+  pointer-events: none;
+  transition: border-color 0.2s ease;
+}
+
+/* Hover and focus states */
+.custom-select:hover {
+  border-color: #4285f4;
+}
+
+.custom-select:focus {
+  outline: none;
+  border-color: #4285f4;
+  box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.2);
+}
+
+.select-wrapper:hover::after {
+  border-top-color: #4285f4;
 }
 
 /* Button container */

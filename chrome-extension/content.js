@@ -47,41 +47,46 @@ document.addEventListener('mousemove', (e) => {
 // Click capture
 document.addEventListener('click', (e) => {
   if (!selectorActive) return;
-  
+
   e.preventDefault();
   e.stopPropagation();
-  
+
   const el = document.elementFromPoint(e.clientX, e.clientY);
   if (!el || el === highlightDiv) {
     cleanup();
     return;
   }
-  
-  // Clean up immediately to avoid interfering with prompt
+
   cleanup();
-  
+
   const info = {
     text: el.innerText || '',
     html: el.outerHTML || '',
     tag: el.tagName || '',
     url: location.href
   };
-  
-  const title = prompt('Enter title for this capture:');
+
+  const title = prompt('Enter a title for this capture:');
   if (!title || !title.trim()) {
-    alert('No title entered, not saved.');
+    alert('Title is required. Not saved.');
     return;
   }
-  
-  // Simple direct storage
+
+  const category = prompt('Enter category/tags (comma separated, optional):');
+  let categories = [];
+  if (category && category.trim()) {
+    categories = category.split(',').map(s => s.trim()).filter(Boolean);
+  }
+
   chrome.storage.local.get({contentList: []}, (res) => {
     const contentList = res.contentList || [];
     contentList.push({
       title: title.trim(),
       info: info,
+      categories: categories,
       timestamp: Date.now()
     });
-    
+
     chrome.storage.local.set({contentList}, () => {
       if (chrome.runtime.lastError) {
         alert('Save failed: ' + chrome.runtime.lastError.message);
