@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web Content Capture API 测试页面</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f5f5f5;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .config-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .config-section input {
+            width: 300px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            margin-right: 10px;
+        }
+
+        .config-section button {
+            padding: 10px 20px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .config-section button:hover {
+            background: #0056b3;
+        }
+
+        .test-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 20px;
+            padding: 20px;
+        }
+
+        .test-card {
+            background: white;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+
+        .test-card h3 {
+            color: #495057;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .test-input {
+            width: 100%;
+            padding: 8px;
+            margin: 5px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .test-button {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px 5px 5px 0;
+        }
+
+        .test-button:hover {
+            background: #218838;
+        }
+
+        .test-button.danger {
+            background: #dc3545;
+        }
+
+        .test-button.danger:hover {
+            background: #c82333;
+        }
+
+        .test-button.warning {
+            background: #ffc107;
+            color: #212529;
+        }
+
+        .test-button.warning:hover {
+            background: #e0a800;
+        }
+
+        .result-area {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 4px;
+            padding: 10px;
+            margin-top: 10px;
+            min-height: 100px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+            overflow-x: auto;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .status-success { background: #28a745; }
+        .status-error { background: #dc3545; }
+        .status-pending { background: #ffc107; }
+
+        .log-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-top: 1px solid #e9ecef;
+        }
+
+        .log-section h3 {
+            margin-bottom: 15px;
+            color: #495057;
+        }
+
+        .log-entry {
+            background: white;
+            border: 1px solid #e9ecef;
+            border-radius: 4px;
+            padding: 10px;
+            margin: 5px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+        }
+
+        .log-entry.success {
+            border-left: 4px solid #28a745;
+            background: #f8fff9;
+        }
+
+        .log-entry.error {
+            border-left: 4px solid #dc3545;
+            background: #fff8f8;
+        }
+
+        .log-entry.info {
+            border-left: 4px solid #17a2b8;
+            background: #f8fdff;
+        }
+
+        .clear-log {
+            float: right;
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .clear-log:hover {
+            background: #5a6268;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 Web Content Capture API 测试页面</h1>
+            <p>测试后端API的完整功能和稳定性</p>
+        </div>
+
+        <div class="config-section">
+            <h3>⚙️ 配置</h3>
+            <input type="text" id="baseUrl" placeholder="后端基础URL" value="https://capture.badtom.dpdns.org">
+            <button onclick="testConnection()">🔍 测试连接</button>
+            <span id="connectionStatus"></span>
+        </div>
+
+        <div class="test-grid">
+            <!-- 创建捕获内容测试 -->
+            <div class="test-card">
+                <h3>📝 创建捕获内容</h3>
+                <input type="text" id="createTitle" class="test-input" placeholder="标题" value="测试标题">
+                <input type="text" id="createText" class="test-input" placeholder="文本内容" value="这是测试内容">
+                <input type="text" id="createHtml" class="test-input" placeholder="HTML内容" value="<p>这是测试HTML</p>">
+                <input type="text" id="createTag" class="test-input" placeholder="HTML标签" value="p">
+                <input type="text" id="createUrl" class="test-input" placeholder="URL" value="https://example.com">
+                <input type="text" id="createCategories" class="test-input" placeholder="分类(逗号分隔)" value="测试,示例">
+                <br>
+                <button class="test-button" onclick="testCreateCapture()">创建内容</button>
+                <div class="result-area" id="createResult"></div>
+            </div>
+
+            <!-- 获取捕获列表测试 -->
+            <div class="test-card">
+                <h3>📋 获取捕获列表</h3>
+                <input type="number" id="listPage" class="test-input" placeholder="页码" value="1">
+                <input type="number" id="listLimit" class="test-input" placeholder="每页数量" value="10">
+                <input type="text" id="listCategory" class="test-input" placeholder="分类筛选" value="">
+                <input type="text" id="listSearch" class="test-input" placeholder="搜索关键词" value="">
+                <br>
+                <button class="test-button" onclick="testGetCaptures()">获取列表</button>
+                <button class="test-button warning" onclick="testGetCapturesWithFilters()">带筛选获取</button>
+                <div class="result-area" id="listResult"></div>
+            </div>
+
+            <!-- 获取单个捕获内容测试 -->
+            <div class="test-card">
+                <h3>🔍 获取单个内容</h3>
+                <input type="text" id="getSingleId" class="test-input" placeholder="内容ID">
+                <br>
+                <button class="test-button" onclick="testGetSingleCapture()">获取内容</button>
+                <div class="result-area" id="singleResult"></div>
+            </div>
+
+            <!-- 更新捕获内容测试 -->
+            <div class="test-card">
+                <h3>✏️ 更新捕获内容</h3>
+                <input type="text" id="updateId" class="test-input" placeholder="内容ID">
+                <input type="text" id="updateTitle" class="test-input" placeholder="新标题" value="更新后的标题">
+                <input type="text" id="updateCategories" class="test-input" placeholder="新分类" value="更新,分类">
+                <br>
+                <button class="test-button" onclick="testUpdateCapture()">更新内容</button>
+                <div class="result-area" id="updateResult"></div>
+            </div>
+
+            <!-- 删除捕获内容测试 -->
+            <div class="test-card">
+                <h3>🗑️ 删除捕获内容</h3>
+                <input type="text" id="deleteId" class="test-input" placeholder="内容ID">
+                <br>
+                <button class="test-button danger" onclick="testDeleteCapture()">删除内容</button>
+                <div class="result-area" id="deleteResult"></div>
+            </div>
+
+            <!-- 获取分类测试 -->
+            <div class="test-card">
+                <h3>🏷️ 获取分类列表</h3>
+                <button class="test-button" onclick="testGetCategories()">获取分类</button>
+                <div class="result-area" id="categoriesResult"></div>
+            </div>
+
+            <!-- 搜索测试 -->
+            <div class="test-card">
+                <h3>🔍 搜索内容</h3>
+                <input type="text" id="searchQuery" class="test-input" placeholder="搜索关键词" value="测试">
+                <input type="number" id="searchPage" class="test-input" placeholder="页码" value="1">
+                <input type="number" id="searchLimit" class="test-input" placeholder="每页数量" value="10">
+                <br>
+                <button class="test-button" onclick="testSearch()">搜索内容</button>
+                <div class="result-area" id="searchResult"></div>
+            </div>
+
+            <!-- 批量测试 -->
+            <div class="test-card">
+                <h3>⚡ 批量测试</h3>
+                <button class="test-button" onclick="runAllTests()">运行所有测试</button>
+                <button class="test-button warning" onclick="clearAllResults()">清空所有结果</button>
+                <button class="test-button danger" onclick="stressTest()">压力测试</button>
+                <div class="result-area" id="batchResult"></div>
+            </div>
+        </div>
+
+        <div class="log-section">
+            <h3>📊 测试日志 <button class="clear-log" onclick="clearLog()">清空日志</button></h3>
+            <div id="testLog"></div>
+        </div>
+    </div>
+
+    <script>
+        // 全局变量
+        let baseUrl = 'https://capture.badtom.dpdns.org';
+        let lastCreatedId = null;
+        let testResults = [];
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            baseUrl = document.getElementById('baseUrl').value;
+            addLog('info', '测试页面已加载，准备开始测试...');
+        });
+
+        // 日志记录
+        function addLog(type, message) {
+            const logDiv = document.getElementById('testLog');
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.className = `log-entry ${type}`;
+            logEntry.innerHTML = `<strong>[${timestamp}]</strong> ${message}`;
+            logDiv.appendChild(logEntry);
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        // 清空日志
+        function clearLog() {
+            document.getElementById('testLog').innerHTML = '';
+        }
+
+        // 清空所有结果
+        function clearAllResults() {
+            const resultAreas = document.querySelectorAll('.result-area');
+            resultAreas.forEach(area => area.textContent = '');
+            addLog('info', '所有测试结果已清空');
+        }
+
+        // 测试连接
+        async function testConnection() {
+            baseUrl = document.getElementById('baseUrl').value;
+            const statusSpan = document.getElementById('connectionStatus');
+            
+            try {
+                addLog('info', `正在测试连接到: ${baseUrl}`);
+                const response = await fetch(`${baseUrl}/test_connection`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    statusSpan.innerHTML = '<span class="status-indicator status-success"></span>连接正常';
+                    addLog('success', '后端连接测试成功');
+                } else {
+                    statusSpan.innerHTML = '<span class="status-indicator status-error"></span>连接失败';
+                    addLog('error', `连接测试失败: ${data.message}`);
+                }
+            } catch (error) {
+                statusSpan.innerHTML = '<span class="status-indicator status-error"></span>连接错误';
+                addLog('error', `连接错误: ${error.message}`);
+            }
+        }
+
+        // 测试创建捕获内容
+        async function testCreateCapture() {
+            const title = document.getElementById('createTitle').value;
+            const text = document.getElementById('createText').value;
+            const html = document.getElementById('createHtml').value;
+            const tag = document.getElementById('createTag').value;
+            const url = document.getElementById('createUrl').value;
+            const categories = document.getElementById('createCategories').value.split(',').map(s => s.trim()).filter(Boolean);
+
+            const data = {
+                title: title,
+                text: text,
+                html: html,
+                tag: tag,
+                url: url,
+                categories: categories
+            };
+
+            try {
+                addLog('info', '正在创建捕获内容...');
+                const response = await fetch(`${baseUrl}/api/capture`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+                const resultArea = document.getElementById('createResult');
+                
+                if (response.ok) {
+                    lastCreatedId = result.data.id;
+                    resultArea.textContent = JSON.stringify(result, null, 2);
+                    addLog('success', `内容创建成功，ID: ${lastCreatedId}`);
+                    
+                    // 自动填充ID到其他测试字段
+                    document.getElementById('getSingleId').value = lastCreatedId;
+                    document.getElementById('updateId').value = lastCreatedId;
+                    document.getElementById('deleteId').value = lastCreatedId;
+                } else {
+                    resultArea.textContent = `错误: ${result.message}`;
+                    addLog('error', `内容创建失败: ${result.message}`);
+                }
+            } catch (error) {
+                document.getElementById('createResult').textContent = `请求错误: ${error.message}`;
+                addLog('error', `请求错误: ${error.message}`);
+            }
+        }
+
+        // 测试获取捕获列表
+        async function testGetCaptures() {
+            const page = document.getElementById('listPage').value;
+            const limit = document.getElementById('listLimit').value;
+
+            try {
+                addLog('info', `正在获取捕获列表，页码: ${page}, 数量: ${limit}`);
+                const response = await fetch(`${baseUrl}/api/captures?page=${page}&limit=${limit}`);
+                const result = await response.json();
+                
+                const resultArea = document.getElementById('listResult');
+                if (response.ok) {
+                    resultArea.textContent = JSON.stringify(result, null, 2);
+                    addLog('success', `获取列表成功，共 ${result.data.total} 条记录`);
+                } else {
+                    resultArea.textContent = `错误: ${result.message}`;
+                    addLog('error', `获取列表失败: ${result.message}`);
+                }
+            } catch (error) {
+                document.getElementById('listResult').textContent = `请求错误: ${error.message}`;
+                addLog('error', `请求错误: ${error.message}`);
+            }
+        }
+
+        // 测试带筛选获取列表
+        async function testGetCapturesWithFilters() {
+            const page = document.getElementById('listPage').value;
+            const limit = document.getElementById('listLimit').value;
+            const category = document.getElementById('listCategory').value;
+            const search = document.getElementById('listSearch').value;
+
+            let url = `${baseUrl}/api/captures?page=${page}&limit=${limit}`;
+            if (category) url += `&category=${encodeURIComponent(category)}`;
+            if (search) url += `&search=${encodeURIComponent(search)}`;
+
+            try {
+                addLog('info', `正在获取筛选后的捕获列表...`);
+                const response = await fetch(url);
+                const result = await response.json();
+                
+                const resultArea = document.getElementById('listResult');
+                if (response.ok) {
+                    resultArea.textContent = JSON.stringify(result, null, 2);
+                    addLog('success', `获取筛选列表成功，共 ${result.data.total} 条记录`);
+                } else {
+                    resultArea.textContent = `错误: ${result.message}`;
+                    addLog('error', `获取筛选列表失败: ${result.message}`);
+                }
+            } catch (error) {
+                document.getElementById('listResult').textContent = `请求错误: ${error.message}`;
+                addLog('error', `请求错误: ${error.message}`);
+            }
+        }
+
+        // 测试获取单个捕获内容
+        async function testGetSingleCapture() {
+            const id = document.getElementById('getSingleId').value;
+            if (!id) {
+                addLog('error', '请输入要获取的内容ID');
+                return;
+            }
+
+            try {
+                addLog('info', `正在获取单个内容，ID: ${id}`);
+                const response = await fetch(`${baseUrl}/api/captures/${id}`);
+                const result = await response.json();
+                
+                const resultArea = document.getElementById('singleResult');
+                if (response.ok) {
+                    resultArea.textContent = JSON.stringify(result, null, 2);
+                    addLog('success', `获取单个内容成功`);
+                } else {
+                    resultArea.textContent = `错误: ${result.message}`;
+                    addLog('error', `获取单个内容失败: ${result.message}`);
+                }
+            } catch (error) {
+                document.getElementById('singleResult').textContent = `请求错误: ${error.message}`;
+                addLog('error', `请求错误: ${error.message}`);
+            }
+        }
+
+        // 测试更新捕获内容
+        async function testUpdateCapture() {
+            const id = document.getElementById('updateId').value;
+            const title = document.getElementById('updateTitle').value;
+            const categories = document.getElementById('updateCategories').value.split(',').map(s => s.trim()).filter(Boolean);
+
+            if (!id) {
+                addLog('error', '请输入要更新的内容ID');
+                return;
+            }
+
+            const data = {
+                title: title,
+                categories: categories
+            };
+
+            try {
+                addLog('info', `正在更新内容，ID: ${id}`);
+                const response = await fetch(`${baseUrl}/api/captures/${id}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+                const resultArea = document.getElementById('updateResult');
+                
+                if (response.ok) {
+                    resultArea.textContent = JSON.stringify(result, null, 2);
+                    addLog('success', `内容更新成功`);
+                } else {
+                    resultArea.textContent = `错误: ${result.message}`;
+                    addLog('error', `内容更新失败: ${result.message}`);
+                }
+            } catch (error) {
+                document.getElementById('updateResult').textContent = `请求错误: ${error.message}`;
+                addLog('error', `请求错误: ${error.message}`);
+            }
+        }
+
+        // 测试删除捕获内容
+        async function testDeleteCapture() {
+            const id = document.getElementById('deleteId').value;
+            if (!id) {
+                addLog('error', '请输入要删除的内容ID');
+                return;
+            }
+
+            if (!confirm(`确定要删除ID为 ${id} 的内容吗？`)) {
+                return;
+            }
+
+            try {
+                addLog('info', `正在删除内容，ID: ${id}`);
+                const response = await fetch(`${baseUrl}/api/captures/${id}`, {
+                    method: 'DELETE'
+                });
+
+                const result = await response.json();
+                const resultArea = document.getElementById('deleteResult');
+                
+                if (response.ok) {
+                    resultArea.textContent = JSON.stringify(result, null, 2);
+                    addLog('success', `内容删除成功`);
+                } else {
+                    resultArea.textContent = `错误: ${result.message}`;
+                    addLog('error', `内容删除失败: ${result.message}`);
+                }
+            } catch (error) {
+                document.getElementById('deleteResult').textContent = `请求错误: ${error.message}`;
+                addLog('error', `请求错误: ${error.message}`);
+            }
+        }
+
+        // 测试获取分类
+        async function testGetCategories() {
+            try {
+                addLog('info', '正在获取分类列表...');
+                const response = await fetch(`${baseUrl}/api/categories`);
+                const result = await response.json();
+                
+                const resultArea = document.getElementById('categoriesResult');
+                if (response.ok) {
+                    resultArea.textContent = JSON.stringify(result, null, 2);
+                    addLog('success', `获取分类成功，共 ${result.data.categories.length} 个分类`);
+                } else {
+                    resultArea.textContent = `错误: ${result.message}`;
+                    addLog('error', `获取分类失败: ${result.message}`);
+                }
+            } catch (error) {
+                document.getElementById('categoriesResult').textContent = `请求错误: ${error.message}`;
+                addLog('error', `请求错误: ${error.message}`);
+            }
+        }
+
+        // 测试搜索
+        async function testSearch() {
+            const query = document.getElementById('searchQuery').value;
+            const page = document.getElementById('searchPage').value;
+            const limit = document.getElementById('searchLimit').value;
+
+            if (!query) {
+                addLog('error', '请输入搜索关键词');
+                return;
+            }
+
+            try {
+                addLog('info', `正在搜索内容，关键词: ${query}`);
+                const response = await fetch(`${baseUrl}/api/search?q=${encodeURIComponent(query)}&page=${page}&limit=${limit}`);
+                const result = await response.json();
+                
+                const resultArea = document.getElementById('searchResult');
+                if (response.ok) {
+                    resultArea.textContent = JSON.stringify(result, null, 2);
+                    addLog('success', `搜索成功，找到 ${result.data.total} 条记录`);
+                } else {
+                    resultArea.textContent = `错误: ${result.message}`;
+                    addLog('error', `搜索失败: ${result.message}`);
+                }
+            } catch (error) {
+                document.getElementById('searchResult').textContent = `请求错误: ${error.message}`;
+                addLog('error', `请求错误: ${error.message}`);
+            }
+        }
+
+        // 运行所有测试
+        async function runAllTests() {
+            addLog('info', '开始运行所有测试...');
+            clearAllResults();
+            
+            const tests = [
+                { name: '连接测试', func: testConnection },
+                { name: '创建内容', func: testCreateCapture },
+                { name: '获取列表', func: testGetCaptures },
+                { name: '获取分类', func: testGetCategories },
+                { name: '搜索内容', func: testSearch }
+            ];
+
+            for (const test of tests) {
+                try {
+                    addLog('info', `运行测试: ${test.name}`);
+                    await test.func();
+                    await new Promise(resolve => setTimeout(resolve, 1000)); // 等待1秒
+                } catch (error) {
+                    addLog('error', `测试 ${test.name} 失败: ${error.message}`);
+                }
+            }
+            
+            addLog('success', '所有测试完成');
+        }
+
+        // 压力测试
+        async function stressTest() {
+            addLog('info', '开始压力测试...');
+            const resultArea = document.getElementById('batchResult');
+            resultArea.textContent = '压力测试进行中...';
+            
+            const startTime = Date.now();
+            const testCount = 10;
+            let successCount = 0;
+            let errorCount = 0;
+
+            for (let i = 0; i < testCount; i++) {
+                try {
+                    const data = {
+                        title: `压力测试 ${i + 1}`,
+                        text: `这是第 ${i + 1} 个压力测试内容`,
+                        html: `<p>压力测试 ${i + 1}</p>`,
+                        tag: 'p',
+                        url: `https://test${i + 1}.com`,
+                        categories: ['压力测试', `测试${i + 1}`]
+                    };
+
+                    const response = await fetch(`${baseUrl}/api/capture`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(data)
+                    });
+
+                    if (response.ok) {
+                        successCount++;
+                    } else {
+                        errorCount++;
+                    }
+                } catch (error) {
+                    errorCount++;
+                }
+            }
+
+            const endTime = Date.now();
+            const duration = endTime - startTime;
+            const avgTime = duration / testCount;
+
+            const result = {
+                totalTests: testCount,
+                successCount: successCount,
+                errorCount: errorCount,
+                duration: `${duration}ms`,
+                averageTime: `${avgTime.toFixed(2)}ms`,
+                successRate: `${((successCount / testCount) * 100).toFixed(2)}%`
+            };
+
+            resultArea.textContent = JSON.stringify(result, null, 2);
+            addLog('success', `压力测试完成: ${result.successCount}/${result.totalTests} 成功，耗时: ${result.duration}`);
+        }
+    </script>
+</body>
+</html>
