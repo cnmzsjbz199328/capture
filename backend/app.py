@@ -36,14 +36,16 @@ def create_app():
         """测试数据库连接状态"""
         try:
             if db_service.is_connected():
+                connection_info = db_service.get_connection_info()
                 return jsonify({
                     "status": "success", 
-                    "message": "数据库连接正常"
+                    "message": "数据库连接正常",
+                    "data": connection_info
                 }), 200
             else:
                 return jsonify({
                     "status": "error", 
-                    "message": "数据库连接失败"
+                    "message": "数据库未连接，请先设置数据库连接"
                 }), 500
         except Exception as e:
             return jsonify({

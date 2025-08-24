@@ -2,6 +2,10 @@ import os
 from dotenv import load_dotenv
 
 # 加载环境变量
+# import os
+from dotenv import load_dotenv
+
+# 加载环境变量
 # load_dotenv()  # 临时注释掉，直接使用系统环境变量
 
 class Config:
@@ -26,9 +30,7 @@ class Config:
     @classmethod
     def validate(cls):
         """验证必要的配置"""
-        if not cls.MONGO_URI:
-            raise ValueError("❌ 必须设置 MONGO_URI 环境变量")
-        
+        # 移除了对MONGO_URI的验证，现在由用户动态提供
         return True
 
 class DevelopmentConfig(Config):

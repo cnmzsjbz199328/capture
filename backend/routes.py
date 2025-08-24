@@ -7,6 +7,61 @@ logger = logging.getLogger(__name__)
 # 创建API蓝图
 api = Blueprint('api', __name__, url_prefix='/api')
 
+@api.route('/database/set', methods=['POST'])
+def set_database():
+    """设置数据库连接"""
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({"status": "error", "message": "请求体中没有提供JSON数据"}), 400
+        
+        mongo_uri = data.get('mongo_uri')
+        collection_name = data.get('collection_name', 'captured_content')
+        
+        if not mongo_uri:
+            return jsonify({"status": "error", "message": "必须提供MongoDB连接字符串"}), 400
+        
+        # 设置数据库连接
+        success = db_service.set_database(mongo_uri, collection_name)
+        
+        if success:
+            connection_info = db_service.get_connection_info()
+            return jsonify({
+                "status": "success",
+                "message": "数据库连接设置成功",
+                "data": connection_info
+            }), 200
+        else:
+            return jsonify({
+                "status": "error",
+                "message": "数据库连接设置失败"
+            }), 500
+        
+    except Exception as e:
+        logger.exception("设置数据库连接失败")
+        return jsonify({"status": "error", "message": f"设置失败: {str(e)}"}), 500
+
+@api.route('/database/status', methods=['GET'])
+def get_database_status():
+    """获取数据库连接状态"""
+    try:
+        if db_service.is_connected():
+            connection_info = db_service.get_connection_info()
+            return jsonify({
+                "status": "success",
+                "message": "数据库连接正常",
+                "data": connection_info
+            }), 200
+        else:
+            return jsonify({
+                "status": "error",
+                "message": "数据库未连接"
+            }), 500
+        
+    except Exception as e:
+        logger.exception("获取数据库状态失败")
+        return jsonify({"status": "error", "message": f"获取状态失败: {str(e)}"}), 500
+
 @api.route('/capture', methods=['POST'])
 def create_capture():
     """创建新的捕获内容"""

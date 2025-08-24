@@ -218,7 +218,13 @@
 
         <div class="config-section">
             <h3>⚙️ 配置</h3>
-            <input type="text" id="baseUrl" placeholder="后端基础URL" value="https://capture.badtom.dpdns.org">
+            <select id="baseUrl">
+                <option value="http://localhost:5000">Local (http://localhost:5000)</option>
+                <option value="https://capture-nwysf2ebi-cnmzsjbz199328s-projects.vercel.app" selected>Vercel (https://capture-nwysf2ebi-cnmzsjbz199328s-projects.vercel.app)</option>
+            </select>
+            <input type="text" id="mongoUri" placeholder="MongoDB连接字符串" value="">
+            <input type="text" id="collectionName" placeholder="集合名称" value="captured_content">
+            <button onclick="setDatabase()">🔗 设置数据库</button>
             <button onclick="testConnection()">🔍 测试连接</button>
             <span id="connectionStatus"></span>
         </div>
@@ -315,14 +321,14 @@
     </div>
 
     <script>
-        // 全局变量
-        let baseUrl = 'https://capture.badtom.dpdns.org';
+                // 全局变量
+        let baseUrl; // Will be read from the input field
         let lastCreatedId = null;
         let testResults = [];
 
         // 初始化
-        document.addEventListener('DOMContentLoaded', function() {
-            baseUrl = document.getElementById('baseUrl').value;
+                document.addEventListener('DOMContentLoaded', function() {
+            // baseUrl is now read directly from the input field in each function
             addLog('info', '测试页面已加载，准备开始测试...');
         });
 
@@ -349,6 +355,49 @@
             addLog('info', '所有测试结果已清空');
         }
 
+        // 设置数据库连接
+                async function setDatabase() {
+            baseUrl = document.getElementById('baseUrl').value;
+            const mongoUri = document.getElementById('mongoUri').value.trim();
+            const collectionName = document.getElementById('collectionName').value.trim();
+            
+            if (!mongoUri) {
+                addLog('error', '请输入MongoDB连接字符串');
+                return;
+            }
+            
+            try {
+                addLog('info', '正在设置数据库连接...');
+                
+                const response = await fetch(`${baseUrl}/api/database/set`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        mongo_uri: mongoUri,
+                        collection_name: collectionName
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    addLog('success', '数据库连接设置成功');
+                    addLog('info', `数据库: ${result.data.database}`);
+                    addLog('info', `集合: ${result.data.collection}`);
+                    
+                    // 自动测试连接
+                    setTimeout(testConnection, 1000);
+                } else {
+                    addLog('error', `数据库设置失败: ${result.message}`);
+                }
+                
+            } catch (error) {
+                addLog('error', `设置失败: ${error.message}`);
+            }
+        }
+
         // 测试连接
         async function testConnection() {
             baseUrl = document.getElementById('baseUrl').value;
@@ -362,6 +411,7 @@
                 if (response.ok) {
                     statusSpan.innerHTML = '<span class="status-indicator status-success"></span>连接正常';
                     addLog('success', '后端连接测试成功');
+                    addLog('info', `当前数据库: ${data.data.database}.${data.data.collection}`);
                 } else {
                     statusSpan.innerHTML = '<span class="status-indicator status-error"></span>连接失败';
                     addLog('error', `连接测试失败: ${data.message}`);
@@ -374,6 +424,7 @@
 
         // 测试创建捕获内容
         async function testCreateCapture() {
+            baseUrl = document.getElementById('baseUrl').value; // Added
             const title = document.getElementById('createTitle').value;
             const text = document.getElementById('createText').value;
             const html = document.getElementById('createHtml').value;
@@ -424,6 +475,7 @@
 
         // 测试获取捕获列表
         async function testGetCaptures() {
+            baseUrl = document.getElementById('baseUrl').value; // Added
             const page = document.getElementById('listPage').value;
             const limit = document.getElementById('listLimit').value;
 
@@ -448,6 +500,7 @@
 
         // 测试带筛选获取列表
         async function testGetCapturesWithFilters() {
+            baseUrl = document.getElementById('baseUrl').value; // Added
             const page = document.getElementById('listPage').value;
             const limit = document.getElementById('listLimit').value;
             const category = document.getElementById('listCategory').value;
@@ -478,6 +531,7 @@
 
         // 测试获取单个捕获内容
         async function testGetSingleCapture() {
+            baseUrl = document.getElementById('baseUrl').value; // Added
             const id = document.getElementById('getSingleId').value;
             if (!id) {
                 addLog('error', '请输入要获取的内容ID');
@@ -498,13 +552,14 @@
                     addLog('error', `获取单个内容失败: ${result.message}`);
                 }
             } catch (error) {
-                document.getElementById('singleResult').textContent = `请求错误: ${error.message}`;
+                document.getElementById('singleResult').textContent = `请求错误: ${error.message}`;r
                 addLog('error', `请求错误: ${error.message}`);
             }
         }
 
         // 测试更新捕获内容
         async function testUpdateCapture() {
+            baseUrl = document.getElementById('baseUrl').value; // Added
             const id = document.getElementById('updateId').value;
             const title = document.getElementById('updateTitle').value;
             const categories = document.getElementById('updateCategories').value.split(',').map(s => s.trim()).filter(Boolean);
@@ -540,13 +595,14 @@
                     addLog('error', `内容更新失败: ${result.message}`);
                 }
             } catch (error) {
-                document.getElementById('updateResult').textContent = `请求错误: ${error.message}`;
+                document.getElementById('updateResult').textContent = `请求错误: ${error.message}`;r
                 addLog('error', `请求错误: ${error.message}`);
             }
         }
 
         // 测试删除捕获内容
         async function testDeleteCapture() {
+            baseUrl = document.getElementById('baseUrl').value; // Added
             const id = document.getElementById('deleteId').value;
             if (!id) {
                 addLog('error', '请输入要删除的内容ID');
@@ -570,17 +626,18 @@
                     resultArea.textContent = JSON.stringify(result, null, 2);
                     addLog('success', `内容删除成功`);
                 } else {
-                    resultArea.textContent = `错误: ${result.message}`;
+                    resultArea.textContent = `错误: ${result.message}`;r
                     addLog('error', `内容删除失败: ${result.message}`);
                 }
             } catch (error) {
-                document.getElementById('deleteResult').textContent = `请求错误: ${error.message}`;
+                document.getElementById('deleteResult').textContent = `请求错误: ${error.message}`;r
                 addLog('error', `请求错误: ${error.message}`);
             }
         }
 
         // 测试获取分类
         async function testGetCategories() {
+            baseUrl = document.getElementById('baseUrl').value; // Added
             try {
                 addLog('info', '正在获取分类列表...');
                 const response = await fetch(`${baseUrl}/api/categories`);
@@ -591,17 +648,18 @@
                     resultArea.textContent = JSON.stringify(result, null, 2);
                     addLog('success', `获取分类成功，共 ${result.data.categories.length} 个分类`);
                 } else {
-                    resultArea.textContent = `错误: ${result.message}`;
+                    resultArea.textContent = `错误: ${result.message}`;r
                     addLog('error', `获取分类失败: ${result.message}`);
                 }
             } catch (error) {
-                document.getElementById('categoriesResult').textContent = `请求错误: ${error.message}`;
+                document.getElementById('categoriesResult').textContent = `请求错误: ${error.message}`;r
                 addLog('error', `请求错误: ${error.message}`);
             }
         }
 
         // 测试搜索
         async function testSearch() {
+            baseUrl = document.getElementById('baseUrl').value; // Added
             const query = document.getElementById('searchQuery').value;
             const page = document.getElementById('searchPage').value;
             const limit = document.getElementById('searchLimit').value;
@@ -621,11 +679,11 @@
                     resultArea.textContent = JSON.stringify(result, null, 2);
                     addLog('success', `搜索成功，找到 ${result.data.total} 条记录`);
                 } else {
-                    resultArea.textContent = `错误: ${result.message}`;
+                    resultArea.textContent = `错误: ${result.message}`;r
                     addLog('error', `搜索失败: ${result.message}`);
                 }
             } catch (error) {
-                document.getElementById('searchResult').textContent = `请求错误: ${error.message}`;
+                document.getElementById('searchResult').textContent = `请求错误: ${error.message}`;r
                 addLog('error', `请求错误: ${error.message}`);
             }
         }
@@ -658,6 +716,7 @@
 
         // 压力测试
         async function stressTest() {
+            baseUrl = document.getElementById('baseUrl').value; // Added
             addLog('info', '开始压力测试...');
             const resultArea = document.getElementById('batchResult');
             resultArea.textContent = '压力测试进行中...';
