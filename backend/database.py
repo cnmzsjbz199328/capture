@@ -26,6 +26,14 @@ class DatabaseService:
             client = MongoClient(mongo_uri)
             db = client.get_database()
             collection = db.get_collection(collection_name)
+            
+            # Ensure text index exists for search functionality
+            try:
+                collection.create_index([("title", "text"), ("text", "text")])
+                logger.info(f"Ensured text index exists for collection '{collection_name}'")
+            except Exception as e:
+                logger.error(f"Failed to create text index: {e}")
+
             self.connections[connection_key] = {
                 'client': client,
                 'db': db,
