@@ -224,8 +224,8 @@
             </select>
             <input type="text" id="mongoUri" placeholder="MongoDB连接字符串" value="">
             <input type="text" id="collectionName" placeholder="集合名称" value="captured_content">
-            <button onclick="setDatabase()">🔗 设置数据库</button>
-            <button onclick="testConnection()">🔍 测试连接</button>
+            <button onclick="connectDatabase()">🔗 连接数据库</button>
+            <button onclick="disconnectDatabase()">🔌 断开连接</button>
             <span id="connectionStatus"></span>
         </div>
 
@@ -325,11 +325,18 @@
         let baseUrl; // Will be read from the input field
         let lastCreatedId = null;
         let testResults = [];
+        let connectionToken = null; // New: Store the connection token
 
         // 初始化
                 document.addEventListener('DOMContentLoaded', function() {
             // baseUrl is now read directly from the input field in each function
             addLog('info', '测试页面已加载，准备开始测试...');
+            // Try to load token from localStorage on startup
+            const storedToken = localStorage.getItem('db_connection_token');
+            if (storedToken) {
+                connectionToken = storedToken;
+                addLog('info', '已从本地存储加载连接令牌。');
+            }
         });
 
         // 日志记录
@@ -355,8 +362,26 @@
             addLog('info', '所有测试结果已清空');
         }
 
-        // 设置数据库连接
-                async function setDatabase() {
+        // Helper function to get headers with Authorization token
+        function getAuthHeaders() {
+            const headers = {
+                'Content-Type': 'application/json'
+            };
+            if (connectionToken) {
+                headers['Authorization'] = `Bearer ${connectionToken}`;
+            } else {
+                // Try to get from localStorage if not in memory
+                const storedToken = localStorage.getItem('db_connection_token');
+                if (storedToken) {
+                    connectionToken = storedToken; // Set it to memory for future use
+                    headers['Authorization'] = `Bearer ${connectionToken}`;
+                }
+            }
+            return headers;
+        }
+
+        // 连接数据库 (New function, replaces setDatabase and testConnection logic)
+        async function connectDatabase() {
             baseUrl = document.getElementById('baseUrl').value;
             const mongoUri = document.getElementById('mongoUri').value.trim();
             const collectionName = document.getElementById('collectionName').value.trim();
@@ -367,9 +392,9 @@
             }
             
             try {
-                addLog('info', '正在设置数据库连接...');
+                addLog('info', '正在连接数据库...');
                 
-                const response = await fetch(`${baseUrl}/api/database/set`, {
+                const response = await fetch(`${baseUrl}/api/database/connect`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -383,42 +408,54 @@
                 const result = await response.json();
                 
                 if (response.ok) {
-                    addLog('success', '数据库连接设置成功');
+                    connectionToken = result.data.token;
+                    addLog('success', '数据库连接成功');
                     addLog('info', `数据库: ${result.data.database}`);
                     addLog('info', `集合: ${result.data.collection}`);
+                    addLog('info', `令牌有效期: ${result.data.expires_in}秒`);
                     
-                    // 自动测试连接
-                    setTimeout(testConnection, 1000);
+                    // 存储令牌到 localStorage（可选）
+                    localStorage.setItem('db_connection_token', connectionToken);
+                    
                 } else {
-                    addLog('error', `数据库设置失败: ${result.message}`);
+                    addLog('error', `连接失败: ${result.message}`);
                 }
                 
             } catch (error) {
-                addLog('error', `设置失败: ${error.message}`);
+                addLog('error', `连接失败: ${error.message}`);
             }
         }
 
-        // 测试连接
-        async function testConnection() {
-            baseUrl = document.getElementById('baseUrl').value;
-            const statusSpan = document.getElementById('connectionStatus');
+        // 断开数据库连接 (New function)
+        async function disconnectDatabase() {
+            if (!connectionToken) {
+                addLog('error', '没有活跃的数据库连接');
+                return;
+            }
             
             try {
-                addLog('info', `正在测试连接到: ${baseUrl}`);
-                const response = await fetch(`${baseUrl}/test_connection`);
-                const data = await response.json();
+                const response = await fetch(`${baseUrl}/api/database/disconnect`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        token: connectionToken
+                    })
+                });
+                
+                const result = await response.json();
                 
                 if (response.ok) {
-                    statusSpan.innerHTML = '<span class="status-indicator status-success"></span>连接正常';
-                    addLog('success', '后端连接测试成功');
-                    addLog('info', `当前数据库: ${data.data.database}.${data.data.collection}`);
+                    addLog('success', '数据库连接已断开');
+                    connectionToken = null;
+                    localStorage.removeItem('db_connection_token');
                 } else {
-                    statusSpan.innerHTML = '<span class="status-indicator status-error"></span>连接失败';
-                    addLog('error', `连接测试失败: ${data.message}`);
+                    addLog('error', `断开失败: ${result.message}`);
                 }
+                
             } catch (error) {
-                statusSpan.innerHTML = '<span class="status-indicator status-error"></span>连接错误';
-                addLog('error', `连接错误: ${error.message}`);
+                addLog('error', `断开失败: ${error.message}`);
             }
         }
 
@@ -445,9 +482,7 @@
                 addLog('info', '正在创建捕获内容...');
                 const response = await fetch(`${baseUrl}/api/capture`, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
+                    headers: getAuthHeaders(), // Use the helper function
                     body: JSON.stringify(data)
                 });
 
@@ -481,7 +516,9 @@
 
             try {
                 addLog('info', `正在获取捕获列表，页码: ${page}, 数量: ${limit}`);
-                const response = await fetch(`${baseUrl}/api/captures?page=${page}&limit=${limit}`);
+                const response = await fetch(`${baseUrl}/api/captures?page=${page}&limit=${limit}`, {
+                    headers: getAuthHeaders()
+                });
                 const result = await response.json();
                 
                 const resultArea = document.getElementById('listResult');
@@ -512,7 +549,9 @@
 
             try {
                 addLog('info', `正在获取筛选后的捕获列表...`);
-                const response = await fetch(url);
+                const response = await fetch(url, {
+                    headers: getAuthHeaders()
+                });
                 const result = await response.json();
                 
                 const resultArea = document.getElementById('listResult');
@@ -540,7 +579,9 @@
 
             try {
                 addLog('info', `正在获取单个内容，ID: ${id}`);
-                const response = await fetch(`${baseUrl}/api/captures/${id}`);
+                const response = await fetch(`${baseUrl}/api/captures/${id}`, {
+                    headers: getAuthHeaders()
+                });
                 const result = await response.json();
                 
                 const resultArea = document.getElementById('singleResult');
@@ -578,9 +619,7 @@
                 addLog('info', `正在更新内容，ID: ${id}`);
                 const response = await fetch(`${baseUrl}/api/captures/${id}`, {
                     method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
+                    headers: getAuthHeaders(),
                     body: JSON.stringify(data)
                 });
 
@@ -616,7 +655,8 @@
             try {
                 addLog('info', `正在删除内容，ID: ${id}`);
                 const response = await fetch(`${baseUrl}/api/captures/${id}`, {
-                    method: 'DELETE'
+                    method: 'DELETE',
+                    headers: getAuthHeaders() // Add headers
                 });
 
                 const result = await response.json();
@@ -640,7 +680,9 @@
             baseUrl = document.getElementById('baseUrl').value; // Added
             try {
                 addLog('info', '正在获取分类列表...');
-                const response = await fetch(`${baseUrl}/api/categories`);
+                const response = await fetch(`${baseUrl}/api/categories`, {
+                    headers: getAuthHeaders()
+                });
                 const result = await response.json();
                 
                 const resultArea = document.getElementById('categoriesResult');
@@ -671,7 +713,9 @@
 
             try {
                 addLog('info', `正在搜索内容，关键词: ${query}`);
-                const response = await fetch(`${baseUrl}/api/search?q=${encodeURIComponent(query)}&page=${page}&limit=${limit}`);
+                const response = await fetch(`${baseUrl}/api/search?q=${encodeURIComponent(query)}&page=${page}&limit=${limit}`, {
+                    headers: getAuthHeaders()
+                });
                 const result = await response.json();
                 
                 const resultArea = document.getElementById('searchResult');
@@ -739,9 +783,7 @@
 
                     const response = await fetch(`${baseUrl}/api/capture`, {
                         method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
+                        headers: getAuthHeaders(),
                         body: JSON.stringify(data)
                     });
 

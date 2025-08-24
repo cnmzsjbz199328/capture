@@ -31,27 +31,7 @@ def create_app():
     def index():
         return "<h1>Web Content Capture Backend is Running!</h1>"
     
-    @app.route("/test_connection")
-    def test_connection():
-        """测试数据库连接状态"""
-        try:
-            if db_service.is_connected():
-                connection_info = db_service.get_connection_info()
-                return jsonify({
-                    "status": "success", 
-                    "message": "数据库连接正常",
-                    "data": connection_info
-                }), 200
-            else:
-                return jsonify({
-                    "status": "error", 
-                    "message": "数据库未连接，请先设置数据库连接"
-                }), 500
-        except Exception as e:
-            return jsonify({
-                "status": "error", 
-                "message": f"连接测试失败: {str(e)}"
-            }), 500
+    
     
     # 错误处理
     @app.errorhandler(404)
