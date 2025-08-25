@@ -309,7 +309,7 @@ document.addEventListener('DOMContentLoaded', () => {
       options.body = JSON.stringify(body);
     }
 
-    const response = await fetch(`https://capture.badtom.dpdns.org/api${endpoint}`, options);
+    const response = await fetch(`${appConfig.backendUrl}/api${endpoint}`, options);
     if (response.status === 401) {
         apiToken = null;
         await chrome.storage.local.remove(['apiToken']);

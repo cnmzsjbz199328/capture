@@ -90,7 +90,7 @@ function saveToLocal(data) {
 
 async function saveToServer(data, token) {
   try {
-    const response = await fetch('https://capture.badtom.dpdns.org/api/capture', {
+    const response = await fetch(`${appConfig.backendUrl}/api/capture`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
