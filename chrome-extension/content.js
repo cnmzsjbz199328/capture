@@ -1,70 +1,46 @@
 let selectorActive = false;
 let highlightDiv = null;
 
-// Cleanup function
 function cleanup() {
   selectorActive = false;
-  if (highlightDiv && highlightDiv.parentNode) {
+  if (highlightDiv) {
     highlightDiv.remove();
+    highlightDiv = null;
   }
-  highlightDiv = null;
 }
 
-// Activate selector
 function activateSelector() {
-  console.log('Activating selector');
-  cleanup(); // Clean up previous state first
-  
+  if (selectorActive) return;
   selectorActive = true;
-  
-  // Create highlight box
-  if (!highlightDiv) {
-    highlightDiv = document.createElement('div');
-    highlightDiv.style.position = 'absolute';
-    highlightDiv.style.pointerEvents = 'none';
-    highlightDiv.style.border = '2px solid #f90';
-    highlightDiv.style.zIndex = '999999';
-    document.body.appendChild(highlightDiv);
-  }
+  highlightDiv = document.createElement('div');
+  highlightDiv.style.position = 'absolute';
+  highlightDiv.style.pointerEvents = 'none';
+  highlightDiv.style.border = '2px solid #f90';
+  highlightDiv.style.zIndex = '999999';
+  document.body.appendChild(highlightDiv);
 }
 
-// Listen for activation event - rebind each time
 window.addEventListener('activate-selector', activateSelector);
 
 document.addEventListener('mousemove', (e) => {
   if (!selectorActive || !highlightDiv) return;
-  
   const el = document.elementFromPoint(e.clientX, e.clientY);
-  if (!el || el === highlightDiv) return;
-  
+  if (!el || el === highlightDiv || !el.getBoundingClientRect) return;
   const rect = el.getBoundingClientRect();
-  highlightDiv.style.left = (rect.left + window.scrollX) + 'px';
-  highlightDiv.style.top = (rect.top + window.scrollY) + 'px';
-  highlightDiv.style.width = rect.width + 'px';
-  highlightDiv.style.height = rect.height + 'px';
+  highlightDiv.style.left = `${rect.left + window.scrollX}px`;
+  highlightDiv.style.top = `${rect.top + window.scrollY}px`;
+  highlightDiv.style.width = `${rect.width}px`;
+  highlightDiv.style.height = `${rect.height}px`;
 });
 
-// Click capture
 document.addEventListener('click', (e) => {
   if (!selectorActive) return;
-
   e.preventDefault();
   e.stopPropagation();
 
   const el = document.elementFromPoint(e.clientX, e.clientY);
-  if (!el || el === highlightDiv) {
-    cleanup();
-    return;
-  }
-
   cleanup();
-
-  const info = {
-    text: el.innerText || '',
-    html: el.outerHTML || '',
-    tag: el.tagName || '',
-    url: location.href
-  };
+  if (!el) return;
 
   const title = prompt('Enter a title for this capture:');
   if (!title || !title.trim()) {
@@ -73,31 +49,67 @@ document.addEventListener('click', (e) => {
   }
 
   const category = prompt('Enter category/tags (comma separated, optional):');
-  let categories = [];
-  if (category && category.trim()) {
-    categories = category.split(',').map(s => s.trim()).filter(Boolean);
-  }
+  const categories = category ? category.split(',').map(s => s.trim()).filter(Boolean) : [];
 
-  chrome.storage.local.get({contentList: []}, (res) => {
-    const contentList = res.contentList || [];
-    contentList.push({
-      title: title.trim(),
-      info: info,
-      categories: categories,
-      timestamp: Date.now()
-    });
+  const dataToSave = {
+    title: title.trim(),
+    text: el.innerText || '',
+    html: el.outerHTML || '',
+    tag: el.tagName || '',
+    url: location.href,
+    categories: categories,
+    timestamp: Date.now()
+  };
 
-    chrome.storage.local.set({contentList}, () => {
-      if (chrome.runtime.lastError) {
-        alert('Save failed: ' + chrome.runtime.lastError.message);
-      } else {
-        alert('Content captured and saved!');
+  chrome.storage.local.get(['storageMode', 'apiToken'], (res) => {
+    if (res.storageMode === 'server') {
+      if (!res.apiToken) {
+        alert('Save failed: Not connected to server. Please connect in the extension popup.');
+        return;
       }
-    });
+      saveToServer(dataToSave, res.apiToken);
+    } else {
+      saveToLocal(dataToSave);
+    }
   });
 }, true);
 
-// ESC to cancel
+function saveToLocal(data) {
+  chrome.storage.local.get({ contentList: [] }, (res) => {
+    const contentList = res.contentList || [];
+    contentList.push(data);
+    chrome.storage.local.set({ contentList }, () => {
+      if (chrome.runtime.lastError) {
+        alert(`Save failed: ${chrome.runtime.lastError.message}`);
+      } else {
+        alert('Content captured and saved locally!');
+      }
+    });
+  });
+}
+
+async function saveToServer(data, token) {
+  try {
+    const response = await fetch('http://localhost:5000/api/capture', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(data)
+    });
+
+    if (response.ok) {
+      alert('Content captured and saved to server!');
+    } else {
+      const errorResult = await response.json();
+      throw new Error(errorResult.message || 'Failed to save');
+    }
+  } catch (error) {
+    alert(`Save to server failed: ${error.message}`);
+  }
+}
+
 document.addEventListener('keydown', (e) => {
   if (selectorActive && e.key === 'Escape') {
     cleanup();

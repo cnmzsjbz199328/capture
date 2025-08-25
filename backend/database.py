@@ -161,7 +161,7 @@ class DatabaseService:
         
         query = {}
         if category:
-            query['category'] = category
+            query['categories'] = {'$in': [category]}
         if search:
             query['$text'] = {'$search': search}
         
@@ -251,7 +251,7 @@ class DatabaseService:
         
         db, collection = connection
         
-        return collection.distinct('category')
+        return collection.distinct('categories')
 
 db_service = DatabaseService()
 
