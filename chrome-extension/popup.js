@@ -93,7 +93,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     statusDiv.textContent = 'Connecting...';
     try {
-      const response = await fetch('http://localhost:5000/api/database/connect', {
+      const response = await fetch('https://capture.badtom.dpdns.org/api/database/connect', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ mongo_uri: uri })
@@ -304,7 +304,7 @@ document.addEventListener('DOMContentLoaded', () => {
       options.body = JSON.stringify(body);
     }
 
-    const response = await fetch(`http://localhost:5000/api${endpoint}`, options);
+    const response = await fetch(`https://capture.badtom.dpdns.org/api${endpoint}`, options);
     if (response.status === 401) {
         apiToken = null;
         await chrome.storage.local.remove(['apiToken']);
