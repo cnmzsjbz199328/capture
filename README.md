@@ -2,6 +2,8 @@
 
 A Chrome extension for capturing, categorizing, and managing web page content with ease.
 
+This feature helps privacy-conscious users save webpages they want to bookmark. Users can name their bookmarks so they can easily find them later. Bookmarks can still be viewed even when offline. Users can also export and delete data. For advanced users, it supports connecting to your own MongoDB database by providing a connection string, enabling cross-device access and persistent storage.
+
 ---
 
 ## Features
@@ -10,8 +12,10 @@ A Chrome extension for capturing, categorizing, and managing web page content wi
 - **Custom Title & Categories**: Assign a title and one or more categories/tags to each capture for easy organization.
 - **Category Filtering**: Quickly filter your saved content by category in the popup interface.
 - **Content Management**: View, delete individual items, delete all, or export all your saved content as a JSON file.
-- **Local Storage**: All data is stored locally in your browser—nothing is sent to any server.
-- **Privacy Friendly**: No personal data is collected or transmitted.
+- **Dual Storage Options**: Choose to store your captured content either:
+    - **Locally in your browser**: Data remains on your device, accessible offline.
+    - **On a user-configured backend server (MongoDB)**: Connect to your own MongoDB database by providing a connection string. This enables cross-device access and persistent storage beyond browser data.
+- **Privacy Friendly**: You control where your data is stored. For server storage, you provide the backend URL, ensuring data is sent only to your chosen server.
 
 ---
 
@@ -30,6 +34,7 @@ A Chrome extension for capturing, categorizing, and managing web page content wi
 2. **Select Element**: Hover over the desired element on the page (an orange border will appear), then click to capture.
 3. **Enter Details**: Provide a title and (optionally) one or more categories/tags (comma separated).
 4. **Manage Content**: In the popup, filter by category, view details, delete, or export your saved content.
+5.  **Choose Storage & Connect to MongoDB**: In the popup, select "Local" or "Server" storage. If choosing "Server", enter your MongoDB connection string (e.g., `mongodb+srv://your_user:your_password@your_cluster.mongodb.net/your_database`) into the provided field. The extension will automatically append necessary options like `?retryWrites=true&w=majority`. Click "Connect" to establish the connection and retrieve your server-stored content.
 
 ---
 
@@ -39,6 +44,7 @@ A Chrome extension for capturing, categorizing, and managing web page content wi
 chrome-extension/
 ├── background.js
 ├── content.js
+├── config.js
 ├── icon16.png
 ├── icon48.png
 ├── icon128.png
@@ -54,14 +60,14 @@ chrome-extension/
 
 - **Categories**: Each capture can have multiple categories/tags. Use the popup's category dropdown to filter.
 - **Export/Import**: Use the "Export All" button to back up your data as a JSON file.
-- **No External Storage**: All data remains in your browser unless you export it.
+- **Backend Configuration**: The backend URL is configured in `chrome-extension/config.js`.
 
 ---
 
 ## Privacy
 
 See [Privacy Policy](../index.html) for details.  
-**Summary:** This extension only stores the content you explicitly capture, and only in your local browser storage. No data is ever sent to any server.
+**Summary:** This extension allows you to store captured content either locally in your browser or on a backend server that you configure. No data is sent to any third-party server unless explicitly configured by you. You retain full control over your data.
 
 ---
 

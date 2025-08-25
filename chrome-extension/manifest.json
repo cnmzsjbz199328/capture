@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "Web Content Selector",
-  "version": "1.0",
-  "description": "Select and save web page content locally.",
+  "version": "2.0",
+  "description": "This feature helps privacy-conscious users save webpages they want to bookmark. Users can name their bookmarks so they can easily find them later. Bookmarks can still be viewed even when offline. Users can also export and delete data. For advanced users, it supports connecting to your own MongoDB database by providing a connection string, enabling cross-device access and persistent storage.",
   "permissions": ["scripting", "activeTab", "storage"],
   "host_permissions": ["<all_urls>"],
   "action": {
