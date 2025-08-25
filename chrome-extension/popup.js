@@ -85,10 +85,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // --- API & Data Logic ---
   async function connectToServer() {
-    const uri = mongoUriInput.value.trim();
+    let uri = mongoUriInput.value.trim();
     if (!uri) {
       alert('Please enter a MongoDB Connection String.');
       return;
+    }
+
+    // Automatically append options if they are not present
+    if (!uri.includes('?')) {
+      uri += '?retryWrites=true&w=majority';
     }
 
     statusDiv.textContent = 'Connecting...';
@@ -102,7 +107,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const result = await response.json();
       if (response.ok && result.status === 'success') {
         apiToken = result.data.token;
-        mongoURI = uri;
+        mongoURI = mongoUriInput.value.trim(); // Save the original user input
         await chrome.storage.local.set({ apiToken, mongoURI });
         statusDiv.textContent = 'Connection successful!';
         updateUIForStorageMode();
