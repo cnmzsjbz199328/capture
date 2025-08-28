@@ -1,3 +1,62 @@
+// --- Sidebar and Communication Logic ---
+
+const SIDEBAR_ID = 'my-extension-sidebar-container';
+
+// Function to toggle the sidebar iframe
+function toggleSidebar() {
+  let sidebar = document.getElementById(SIDEBAR_ID);
+  if (sidebar) {
+    sidebar.remove();
+    document.body.style.marginRight = ''; // Reset body margin
+  } else {
+    sidebar = document.createElement('iframe');
+    sidebar.id = SIDEBAR_ID;
+    sidebar.src = chrome.runtime.getURL('sidebar.html');
+
+    // Style the iframe
+    sidebar.style.position = 'fixed';
+    sidebar.style.top = '0';
+    sidebar.style.right = '0';
+    sidebar.style.width = '350px'; // Sidebar width
+    sidebar.style.height = '100vh';
+    sidebar.style.border = 'none';
+    sidebar.style.zIndex = '2147483647'; // Ensure it's on top
+    sidebar.style.boxShadow = '-2px 0 15px rgba(0,0,0,0.2)';
+
+    document.body.appendChild(sidebar);
+    // Adjust body margin to prevent content from being overlapped by the sidebar
+    document.body.style.marginRight = '350px'; 
+  }
+}
+
+// Listen for toggle command from the popup
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  if (request.action === "toggle_sidebar") {
+    toggleSidebar();
+    sendResponse({ status: "done" });
+  }
+  return true; // Keep message channel open for async response
+});
+
+// Listen for commands from the sidebar iframe
+window.addEventListener('message', (event) => {
+  // Security: Only accept messages from our own extension
+  if (event.origin !== chrome.runtime.getURL('').slice(0, -1)) {
+    return;
+  }
+
+  if (event.data.action && (event.data.action === 'activateSelectorFromSidebar')) {
+    // Hide sidebar temporarily to allow selection on the full page
+    let sidebar = document.getElementById(SIDEBAR_ID);
+    if (sidebar) sidebar.style.display = 'none';
+    
+    activateSelector();
+  }
+}, false);
+
+
+// --- Existing Element Selection Logic ---
+
 let selectorActive = false;
 let highlightDiv = null;
 
@@ -7,6 +66,9 @@ function cleanup() {
     highlightDiv.remove();
     highlightDiv = null;
   }
+  // When selection is done or cancelled, show the sidebar again
+  let sidebar = document.getElementById(SIDEBAR_ID);
+  if (sidebar) sidebar.style.display = 'block';
 }
 
 function activateSelector() {
@@ -20,7 +82,8 @@ function activateSelector() {
   document.body.appendChild(highlightDiv);
 }
 
-window.addEventListener('activate-selector', activateSelector);
+// This is now triggered by the message listener from the iframe
+// window.addEventListener('activate-selector', activateSelector);
 
 document.addEventListener('mousemove', (e) => {
   if (!selectorActive || !highlightDiv) return;
@@ -83,6 +146,11 @@ function saveToLocal(data) {
         alert(`Save failed: ${chrome.runtime.lastError.message}`);
       } else {
         alert('Content captured and saved locally!');
+        console.log('[content.js] Save complete. Attempting to send refresh message to sidebar...');
+        const sidebarIframe = document.getElementById(SIDEBAR_ID);
+        if (sidebarIframe) {
+          sidebarIframe.contentWindow.postMessage({ action: 'refreshSidebarView' }, '*');
+        }
       }
     });
   });
@@ -101,6 +169,11 @@ async function saveToServer(data, token) {
 
     if (response.ok) {
       alert('Content captured and saved to server!');
+      console.log('[content.js] Save complete. Attempting to send refresh message to sidebar...');
+      const sidebarIframe = document.getElementById(SIDEBAR_ID);
+      if (sidebarIframe) {
+        sidebarIframe.contentWindow.postMessage({ action: 'refreshSidebarView' }, '*');
+      }
     } else {
       const errorResult = await response.json();
       throw new Error(errorResult.message || 'Failed to save');

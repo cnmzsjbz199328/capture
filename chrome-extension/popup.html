@@ -1,48 +1,15 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8">
-  <title>Web Content Selector</title>
+  <title>Capture</title>
   <link rel="stylesheet" href="popup.css">
+  <style>
+    body { width: 200px; text-align: center; padding: 10px; }
+    button { width: 100%; padding: 10px; font-size: 14px; }
+  </style>
 </head>
 <body>
-  <button id="activate">Click to select content on page</button>
-  <div id="status"></div>
-  <hr>
-
-  <div class="storage-container" style="padding: 5px; background-color: #f3f3f3; border-radius: 5px; margin-bottom: 10px;">
-    <div style="display: flex; align-items: center; justify-content: space-between;">
-      <label for="storage-select" style="margin-right: 10px;">Storage:</label>
-      <select id="storage-select" class="custom-select">
-        <option value="local">Local</option>
-        <option value="server">Server</option>
-      </select>
-    </div>
-    <div id="server-connection-section" style="display: none; margin-top: 10px;">
-      <input type="text" id="mongo-uri-input" placeholder="mongodb+srv://.../capture(any name you love)" style="width: 95%; margin-bottom: 5px;">
-      <button id="connect-btn" class="action-button">Connect</button>
-      <button id="disconnect-btn" class="action-button" style="display: none;">Disconnect</button>
-      <div id="connection-status" style="margin-top: 5px; font-size: 12px;"></div>
-    </div>
-  </div>
-
-  <div class="select-wrapper">
-    <select id="categoryDropdown" class="custom-select">
-      <option value="__all__" selected>All Categories</option>
-    </select>
-  </div>
-  <div class="select-wrapper">
-    <select id="titleDropdown" class="custom-select">
-      <option value="" disabled selected>Select saved content</option>
-    </select>
-  </div>
-  <div class="button-container">
-    <button id="deleteSelected" class="action-button">Delete Selected</button>
-    <button id="deleteAll" class="action-button">Delete All</button>
-    <button id="exportAll" class="action-button">Export All</button>
-  </div>
-  <div id="contentDetail"></div>
-  <script src="config.js"></script>
+  <button id="toggleSidebarBtn">Open/Close Sidebar</button>
   <script src="popup.js"></script>
 </body>
 </html>
