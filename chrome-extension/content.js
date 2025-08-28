@@ -1,8 +1,23 @@
 // --- Sidebar and Communication Logic ---
 
 const SIDEBAR_ID = 'my-extension-sidebar-container';
+const WIDTH_SETTINGS = {
+  low: '350px',
+  medium: '500px',
+  high: '700px'
+};
 
-// Function to toggle the sidebar iframe
+function updateSidebarLayout() {
+  const sidebar = document.getElementById(SIDEBAR_ID);
+  if (!sidebar) return;
+
+  chrome.storage.local.get({ sidebarWidth: 'low' }, (data) => {
+    const newWidth = WIDTH_SETTINGS[data.sidebarWidth] || WIDTH_SETTINGS['low'];
+    sidebar.style.width = newWidth;
+    document.body.style.marginRight = newWidth;
+  });
+}
+
 function toggleSidebar() {
   let sidebar = document.getElementById(SIDEBAR_ID);
   if (sidebar) {
@@ -17,19 +32,18 @@ function toggleSidebar() {
     sidebar.style.position = 'fixed';
     sidebar.style.top = '0';
     sidebar.style.right = '0';
-    sidebar.style.width = '350px'; // Sidebar width
     sidebar.style.height = '100vh';
     sidebar.style.border = 'none';
     sidebar.style.zIndex = '2147483647'; // Ensure it's on top
     sidebar.style.boxShadow = '-2px 0 15px rgba(0,0,0,0.2)';
 
     document.body.appendChild(sidebar);
-    // Adjust body margin to prevent content from being overlapped by the sidebar
-    document.body.style.marginRight = '350px'; 
+    // Set initial width based on stored setting
+    updateSidebarLayout();
   }
 }
 
-// Listen for toggle command from the popup
+// Listen for toggle command from the background script
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === "toggle_sidebar") {
     toggleSidebar();
@@ -46,11 +60,13 @@ window.addEventListener('message', (event) => {
   }
 
   if (event.data.action && (event.data.action === 'activateSelectorFromSidebar')) {
-    // Hide sidebar temporarily to allow selection on the full page
     let sidebar = document.getElementById(SIDEBAR_ID);
     if (sidebar) sidebar.style.display = 'none';
-    
     activateSelector();
+  }
+
+  if (event.data.action && (event.data.action === 'updateLayout')) {
+    updateSidebarLayout();
   }
 }, false);
 
@@ -66,7 +82,6 @@ function cleanup() {
     highlightDiv.remove();
     highlightDiv = null;
   }
-  // When selection is done or cancelled, show the sidebar again
   let sidebar = document.getElementById(SIDEBAR_ID);
   if (sidebar) sidebar.style.display = 'block';
 }
@@ -81,9 +96,6 @@ function activateSelector() {
   highlightDiv.style.zIndex = '999999';
   document.body.appendChild(highlightDiv);
 }
-
-// This is now triggered by the message listener from the iframe
-// window.addEventListener('activate-selector', activateSelector);
 
 document.addEventListener('mousemove', (e) => {
   if (!selectorActive || !highlightDiv) return;

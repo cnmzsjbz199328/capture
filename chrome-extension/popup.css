@@ -47,7 +47,7 @@ html, body {
 }
 
 #activate {
-  width: 100%;
+  width: 50%;
   padding: 8px;
   font-size: 14px;
   background: #4285f4;
@@ -120,4 +120,48 @@ hr {
   border-top: 1px solid #eee;
   width: 100%;
   margin: 0;
+}
+
+/* --- Width Controls --- */
+.top-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-direction: row-reverse;
+}
+
+#activate {
+  flex-grow: 1;
+  margin-right: 8px;
+}
+
+#width-controls {
+  display: flex;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.width-btn {
+  padding: 8px 12px;
+  font-size: 12px;
+  background: #fff;
+  border: none;
+  border-left: 1px solid #ccc;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+#width-controls .width-btn:first-child {
+  border-left: none;
+}
+
+.width-btn:hover {
+  background: #f0f0f0;
+}
+
+.width-btn.active {
+  background: #4285f4;
+  color: white;
+  font-weight: bold;
 }

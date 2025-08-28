@@ -14,6 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const deleteAllBtn = document.getElementById('deleteAll');
   const exportAllBtn = document.getElementById('exportAll');
   const contentDetailDiv = document.getElementById('contentDetail');
+  const widthControls = document.querySelectorAll('.width-btn');
 
   // App State
   let storageMode = 'local';
@@ -22,16 +23,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // --- Initialization ---
   async function initialize() {
-    const data = await chrome.storage.local.get(['storageMode', 'apiToken', 'mongoURI']);
+    const data = await chrome.storage.local.get(['storageMode', 'apiToken', 'mongoURI', 'sidebarWidth']);
     storageMode = data.storageMode || 'local';
     apiToken = data.apiToken || null;
     mongoURI = data.mongoURI || '';
+    const sidebarWidth = data.sidebarWidth || 'low'; // Default to 'low'
 
     storageSelect.value = storageMode;
     mongoUriInput.value = mongoURI;
 
     updateUIForStorageMode();
     renderCategoryAndList();
+    updateWidthButtons(sidebarWidth);
 
     // Setup Event Listeners
     activateBtn.addEventListener('click', activateSelector);
@@ -43,6 +46,9 @@ document.addEventListener('DOMContentLoaded', () => {
     deleteSelectedBtn.addEventListener('click', deleteSelected);
     deleteAllBtn.addEventListener('click', deleteAll);
     exportAllBtn.addEventListener('click', exportAll);
+    widthControls.forEach(btn => {
+      btn.addEventListener('click', handleWidthChange);
+    });
   }
 
   // --- UI Update Logic ---
@@ -67,7 +73,26 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  function updateWidthButtons(activeWidth) {
+    widthControls.forEach(btn => {
+      if (btn.dataset.width === activeWidth) {
+        btn.classList.add('active');
+      } else {
+        btn.classList.remove('active');
+      }
+    });
+  }
+
   // --- Event Handlers ---
+  async function handleWidthChange(event) {
+    const newWidth = event.target.dataset.width;
+    if (!newWidth) return;
+
+    await chrome.storage.local.set({ sidebarWidth: newWidth });
+    updateWidthButtons(newWidth);
+    window.parent.postMessage({ action: 'updateLayout' }, '*');
+  }
+
   async function handleStorageChange() {
     storageMode = storageSelect.value;
     await chrome.storage.local.set({ storageMode });
@@ -91,7 +116,6 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    // Automatically append options if they are not present
     if (!uri.includes('?')) {
       uri += '?retryWrites=true&w=majority';
     }
@@ -107,7 +131,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const result = await response.json();
       if (response.ok && result.status === 'success') {
         apiToken = result.data.token;
-        mongoURI = mongoUriInput.value.trim(); // Save the original user input
+        mongoURI = mongoUriInput.value.trim();
         await chrome.storage.local.set({ apiToken, mongoURI });
         statusDiv.textContent = 'Connection successful!';
         updateUIForStorageMode();
@@ -125,7 +149,7 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       await makeApiCall('/database/disconnect', 'POST', { token: apiToken });
     } catch (error) {
-      // Ignore errors on disconnect, just clear local data
+      // Ignore errors
     }
     apiToken = null;
     await chrome.storage.local.remove(['apiToken']);
@@ -158,19 +182,15 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       const capturesResponse = await makeApiCall(`/captures?category=${selectedCategory === '__all__' ? '' : selectedCategory}`);
       const categoriesResponse = await makeApiCall('/categories');
-      
       const captures = capturesResponse.data.captures || [];
       const categories = categoriesResponse.data.categories || [];
-      
       populateDropdowns(captures, selectedCategory, categories);
-
     } catch (error) {
       statusDiv.textContent = `Error: ${error.message}`;
     }
   }
   
   function populateDropdowns(list, selectedCategory, serverCategories = null) {
-    // Categories
     const categorySet = new Set();
     if (serverCategories) {
         serverCategories.forEach(cat => categorySet.add(cat));
@@ -193,7 +213,6 @@ document.addEventListener('DOMContentLoaded', () => {
         categoryDropdown.appendChild(option);
     });
 
-    // Titles
     let filteredList = list;
     if (storageMode === 'local' && selectedCategory !== '__all__') {
         filteredList = list.filter(item => (item.categories || []).includes(selectedCategory));
@@ -321,7 +340,6 @@ document.addEventListener('DOMContentLoaded', () => {
   
   function activateSelector() {
     statusDiv.innerText = 'Selector activated, click target content on page (Press ESC to cancel)';
-    // Post message to the parent window (content.js) to activate the selector
     window.parent.postMessage({ action: 'activateSelectorFromSidebar' }, '*');
   }
   
@@ -333,9 +351,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Listen for messages from the parent window (content.js)
   window.addEventListener('message', (event) => {
-    // Optional: Add an origin check for security if you want to be more robust
-    // if (event.origin !== 'chrome-extension://YOUR_EXTENSION_ID') return;
-    
     if (event.data.action && event.data.action === 'refreshSidebarView') {
       console.log('Refresh command received from content script.');
       renderCategoryAndList(categoryDropdown.value);
