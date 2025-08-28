@@ -1,0 +1,26 @@
+{
+  "manifest_version": 3,
+  "name": "Web Content Selector",
+  "version": "2.0",
+  "description": "This feature helps privacy-conscious users save webpages they want to bookmark. Users can name their bookmarks so they can easily find them later. Bookmarks can still be viewed even when offline. Users can also export and delete data. For advanced users, it supports connecting to your own MongoDB database by providing a connection string, enabling cross-device access and persistent storage.",
+  "permissions": ["scripting", "activeTab", "storage"],
+  "host_permissions": ["<all_urls>"],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icon16.png",
+      "48": "icon48.png",
+      "128": "icon128.png"
+    }
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["config.js", "content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}
