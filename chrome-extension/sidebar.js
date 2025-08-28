@@ -202,7 +202,7 @@ document.addEventListener('DOMContentLoaded', () => {
     titleDropdown.innerHTML = '';
     if (filteredList.length === 0) {
         titleDropdown.innerHTML = '<option value="" disabled selected>No saved content</option>';
-        contentDetailDiv.innerHTML = '<div style="text-align: center; color: #999; padding: 20px;">Select an item to view details</div>';
+        contentDetailDiv.innerHTML = '<div style="display: flex; align-items: center; justify-content: center; height: 100%; color: #999; background-color: #fafafa; border: 1px solid #ccc; box-sizing: border-box;">Select an item to view details</div>';
         return;
     }
     titleDropdown.innerHTML = '<option value="" disabled selected>Select saved content</option>';
@@ -213,21 +213,17 @@ document.addEventListener('DOMContentLoaded', () => {
         titleDropdown.appendChild(option);
     });
     titleDropdown.filteredList = filteredList;
-    contentDetailDiv.innerHTML = '<div style="text-align: center; color: #999; padding: 20px;">Select an item to view details</div>';
+    contentDetailDiv.innerHTML = '<div style="display: flex; align-items: center; justify-content: center; height: 100%; color: #999; background-color: #fafafa; border: 1px solid #ccc; box-sizing: border-box;">Select an item to view details</div>';
   }
 
   function showDetail(item) {
-    const categories = (item.categories && item.categories.length)
-      ? `<div><b>Categories:</b> ${item.categories.join(', ')}</div>`
-      : '';
     const url = item.info ? item.info.url : item.url;
     const html = item.info ? item.info.html : item.html;
 
     contentDetailDiv.innerHTML = `
-      ${categories}
       <div><b>URL:</b> <a href="${url}" target="_blank" style="color:#0066cc;">${url}</a></div>
       <div style="margin-top:8px;"><b>HTML:</b></div>
-      <iframe style="width:100%;min-height:200px;border:1px solid #ccc;background:#fff;margin-top:4px;" sandbox="allow-same-origin" srcdoc='${escapeHtmlForIframe(html)}'></iframe>`;
+      <iframe sandbox="allow-same-origin" srcdoc='${escapeHtmlForIframe(html)}'></iframe>`;
   }
 
   async function deleteSelected() {
