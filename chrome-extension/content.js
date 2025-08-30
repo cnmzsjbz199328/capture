@@ -157,7 +157,7 @@ function saveToLocal(data) {
       if (chrome.runtime.lastError) {
         alert(`Save failed: ${chrome.runtime.lastError.message}`);
       } else {
-        alert('Content captured and saved locally!');
+        // alert('Content captured and saved locally!');
         console.log('[content.js] Save complete. Attempting to send refresh message to sidebar...');
         const sidebarIframe = document.getElementById(SIDEBAR_ID);
         if (sidebarIframe) {
@@ -180,8 +180,8 @@ async function saveToServer(data, token) {
     });
 
     if (response.ok) {
-      alert('Content captured and saved to server!');
-      console.log('[content.js] Save complete. Attempting to send refresh message to sidebar...');
+      // Success alert removed as per user request.
+      console.log('Content captured and saved to server!');
       const sidebarIframe = document.getElementById(SIDEBAR_ID);
       if (sidebarIframe) {
         sidebarIframe.contentWindow.postMessage({ action: 'refreshSidebarView' }, '*');
