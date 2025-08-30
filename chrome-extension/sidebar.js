@@ -15,6 +15,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const exportAllBtn = document.getElementById('exportAll');
   const contentDetailDiv = document.getElementById('contentDetail');
   const widthControls = document.querySelectorAll('.width-btn');
+  const fontSizeControls = document.querySelectorAll('.font-size-btn');
 
   // App State
   let storageMode = 'local';
@@ -27,7 +28,7 @@ document.addEventListener('DOMContentLoaded', () => {
     storageMode = data.storageMode || 'local';
     apiToken = data.apiToken || null;
     mongoURI = data.mongoURI || '';
-    const sidebarWidth = data.sidebarWidth || 'low'; // Default to 'low'
+    const sidebarWidth = data.sidebarWidth || 'low';
 
     storageSelect.value = storageMode;
     mongoUriInput.value = mongoURI;
@@ -46,9 +47,8 @@ document.addEventListener('DOMContentLoaded', () => {
     deleteSelectedBtn.addEventListener('click', deleteSelected);
     deleteAllBtn.addEventListener('click', deleteAll);
     exportAllBtn.addEventListener('click', exportAll);
-    widthControls.forEach(btn => {
-      btn.addEventListener('click', handleWidthChange);
-    });
+    widthControls.forEach(btn => btn.addEventListener('click', handleWidthChange));
+    fontSizeControls.forEach(btn => btn.addEventListener('click', handleFontSizeChange));
   }
 
   // --- UI Update Logic ---
@@ -74,23 +74,27 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function updateWidthButtons(activeWidth) {
-    widthControls.forEach(btn => {
-      if (btn.dataset.width === activeWidth) {
-        btn.classList.add('active');
-      } else {
-        btn.classList.remove('active');
-      }
-    });
+    widthControls.forEach(btn => btn.classList.toggle('active', btn.dataset.width === activeWidth));
+  }
+
+  function updateFontSizeButtons(activeSize) {
+    fontSizeControls.forEach(btn => btn.classList.toggle('active', btn.dataset.size === activeSize));
   }
 
   // --- Event Handlers ---
   async function handleWidthChange(event) {
     const newWidth = event.target.dataset.width;
     if (!newWidth) return;
-
     await chrome.storage.local.set({ sidebarWidth: newWidth });
     updateWidthButtons(newWidth);
     window.parent.postMessage({ action: 'updateLayout' }, '*');
+  }
+
+  function handleFontSizeChange(event) {
+    const newSize = event.target.dataset.size;
+    if (!newSize) return;
+    applyFontSize(newSize);
+    updateFontSizeButtons(newSize);
   }
 
   async function handleStorageChange() {
@@ -102,60 +106,43 @@ document.addEventListener('DOMContentLoaded', () => {
 
   async function handleTitleChange() {
     const idx = titleDropdown.value;
+    if (idx === '') return;
     const filteredList = titleDropdown.filteredList || [];
-    if (idx !== '' && filteredList[idx]) {
+    if (filteredList[idx]) {
       showDetail(filteredList[idx]);
     }
   }
 
-  // --- API & Data Logic ---
-  async function connectToServer() {
-    let uri = mongoUriInput.value.trim();
-    if (!uri) {
-      alert('Please enter a MongoDB Connection String.');
-      return;
-    }
+  // --- Core Logic ---
+  function applyFontSize(size) {
+    const iframe = contentDetailDiv.querySelector('iframe');
+    if (!iframe || !iframe.contentDocument) return;
 
-    if (!uri.includes('?')) {
-      uri += '?retryWrites=true&w=majority';
+    let styleEl = iframe.contentDocument.getElementById('font-styler');
+    if (!styleEl) {
+      styleEl = iframe.contentDocument.createElement('style');
+      styleEl.id = 'font-styler';
+      iframe.contentDocument.head.appendChild(styleEl);
     }
-
-    statusDiv.textContent = 'Connecting...';
-    try {
-      const response = await fetch('https://capture.badtom.dpdns.org/api/database/connect', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ mongo_uri: uri })
-      });
-
-      const result = await response.json();
-      if (response.ok && result.status === 'success') {
-        apiToken = result.data.token;
-        mongoURI = mongoUriInput.value.trim();
-        await chrome.storage.local.set({ apiToken, mongoURI });
-        statusDiv.textContent = 'Connection successful!';
-        updateUIForStorageMode();
-        renderCategoryAndList();
-      } else {
-        throw new Error(result.message || 'Connection failed');
-      }
-    } catch (error) {
-      statusDiv.textContent = `Connection error: ${error.message}`;
-    }
+    styleEl.textContent = `body { font-size: ${size}em !important; }`;
   }
 
-  async function disconnectFromServer() {
-    statusDiv.textContent = 'Disconnecting...';
-    try {
-      await makeApiCall('/database/disconnect', 'POST', { token: apiToken });
-    } catch (error) {
-      // Ignore errors
+  function showDetail(item) {
+    const url = item.info ? item.info.url : item.url;
+    const html = item.info ? item.info.html : item.html;
+
+    contentDetailDiv.innerHTML = `
+      <div><b>URL:</b> <a href="${url}" target="_blank" style="color:#0066cc;">${url}</a></div>
+      <iframe sandbox="allow-same-origin" srcdoc='${escapeHtmlForIframe(html)}'></iframe>`;
+
+    const iframe = contentDetailDiv.querySelector('iframe');
+    if (iframe) {
+      iframe.addEventListener('load', () => {
+        // Apply default font size on load and set 1x button to active
+        applyFontSize('1');
+        updateFontSizeButtons('1');
+      }, { once: true });
     }
-    apiToken = null;
-    await chrome.storage.local.remove(['apiToken']);
-    statusDiv.textContent = 'Disconnected.';
-    updateUIForStorageMode();
-    renderCategoryAndList();
   }
 
   async function renderCategoryAndList(selectedCategory = '__all__') {
@@ -235,14 +222,53 @@ document.addEventListener('DOMContentLoaded', () => {
     contentDetailDiv.innerHTML = '<div style="display: flex; align-items: center; justify-content: center; height: 100%; color: #999; background-color: #fafafa; border: 1px solid #ccc; box-sizing: border-box;">Select an item to view details</div>';
   }
 
-  function showDetail(item) {
-    const url = item.info ? item.info.url : item.url;
-    const html = item.info ? item.info.html : item.html;
+  async function connectToServer() {
+    let uri = mongoUriInput.value.trim();
+    if (!uri) {
+      alert('Please enter a MongoDB Connection String.');
+      return;
+    }
 
-    contentDetailDiv.innerHTML = `
-      <div><b>URL:</b> <a href="${url}" target="_blank" style="color:#0066cc;">${url}</a></div>
-      <div style="margin-top:8px;"><b>HTML:</b></div>
-      <iframe sandbox="allow-same-origin" srcdoc='${escapeHtmlForIframe(html)}'></iframe>`;
+    if (!uri.includes('?')) {
+      uri += '?retryWrites=true&w=majority';
+    }
+
+    statusDiv.textContent = 'Connecting...';
+    try {
+      const response = await fetch('https://capture.badtom.dpdns.org/api/database/connect', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mongo_uri: uri })
+      });
+
+      const result = await response.json();
+      if (response.ok && result.status === 'success') {
+        apiToken = result.data.token;
+        mongoURI = mongoUriInput.value.trim();
+        await chrome.storage.local.set({ apiToken, mongoURI });
+        statusDiv.textContent = 'Connection successful!';
+        updateUIForStorageMode();
+        renderCategoryAndList();
+      } else {
+        throw new Error(result.message || 'Connection failed');
+      }
+    } catch (error) {
+      statusDiv.textContent = `Connection error: ${error.message}`;
+    }
+  }
+
+  async function disconnectFromServer() {
+    statusDiv.textContent = 'Disconnecting...';
+    try {
+      await makeApiCall('/database/disconnect', 'POST', { token: apiToken });
+    } catch (error) {
+      // Ignore errors
+    }
+    apiToken = null;
+    await chrome.storage.local.remove(['apiToken']);
+    statusDiv.textContent = 'Disconnected.';
+    updateUIForStorageMode();
+    renderCategoryAndList();
   }
 
   async function deleteSelected() {

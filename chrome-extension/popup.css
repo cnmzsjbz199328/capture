@@ -128,6 +128,7 @@ hr {
   justify-content: space-between;
   align-items: center;
   flex-direction: row-reverse;
+  gap:10px;
 }
 
 #activate {
@@ -161,6 +162,44 @@ hr {
 }
 
 .width-btn.active {
+  background: #4285f4;
+  color: white;
+  font-weight: bold;
+}
+
+/* --- Font Size Controls --- */
+.detail-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+#font-size-controls {
+  display: flex;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.font-size-btn {
+  padding: 4px 8px;
+  font-size: 12px;
+  background: #fff;
+  border: none;
+  border-left: 1px solid #ccc;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+#font-size-controls .font-size-btn:first-child {
+  border-left: none;
+}
+
+.font-size-btn:hover {
+  background: #f0f0f0;
+}
+
+.font-size-btn.active {
   background: #4285f4;
   color: white;
   font-weight: bold;
