@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Web Content Selector",
   "version": "2.1",
-  "description": "This feature helps privacy-conscious users save webpages they want to bookmark. Users can name their bookmarks so they can easily find them later. Bookmarks can still be viewed even when offline. Users can also export and delete data. For advanced users, it supports connecting to your own MongoDB database by providing a connection string, enabling cross-device access and persistent storage.",
+  "description": "Capture, save, and manage web content in a powerful sidebar. Supports local & server storage, adjustable width/font size.",
   "permissions": [
     "storage"
   ],
